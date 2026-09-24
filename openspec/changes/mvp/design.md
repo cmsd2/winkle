@@ -71,7 +71,7 @@ So hermit computes this value from the launch URL and writes it to `StartupWMCla
 ### 6. Icon installation
 - **Raster:** decoded with the `image` crate (PNG, ICO, JPEG, WebP), converted to RGBA, scaled with Lanczos3 to 256×256 (upscaled if smaller), and written to `$XDG_DATA_HOME/icons/hicolor/256x256/apps/hermit-<id>.png`. Non-square images are padded onto a transparent square rather than stretched.
 - **SVG:** copied to `hicolor/scalable/apps/hermit-<id>.svg` and also rasterised to the 256 bucket via `resvg`.
-- **Placeholder:** a coloured rounded square in the theme colour (or a neutral grey) with the app name's first letter, drawn with `tiny-skia` plus a bundled font. This is the single most visible "cheap vs native" signal, so it's worth a proper look.
+- **Placeholder:** an SVG of a rounded square in the theme colour (or a neutral grey) with the app name's first letter. It's installed like any SVG icon (scalable plus a 256 PNG), and rendered with the system's fonts (Ubuntu, Cantarell or Noto Sans), so no font is bundled. This is the single most visible "cheap vs native" signal, so it's worth a proper look.
 - **Desktop entry:** references `Icon=hermit-<id>` (a theme name, not a path) so GNOME picks the best size.
 - **Refresh:** after writing, touch the `hicolor` directory's mtime so GNOME Shell notices new icons without a re-login.
 

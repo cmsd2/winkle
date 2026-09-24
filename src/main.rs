@@ -3,6 +3,7 @@ mod cli;
 mod commands;
 mod desktop;
 mod entry;
+mod fsutil;
 mod icons;
 mod metadata;
 mod paths;

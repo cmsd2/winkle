@@ -32,15 +32,15 @@
 
 ## 4. Icons
 
-- [ ] 4.1 Raster normalisation: decode PNG/ICO/JPEG/WebP, pad non-square images to square, and Lanczos-scale to 256×256 PNG. Verify: unit tests with a 16×16 ICO, a 512×512 PNG and a 300×200 JPEG check the output is 256×256 and not stretched.
-- [ ] 4.2 SVG handling: copy the SVG to scalable and rasterise to 256 via resvg. Verify: a unit test checks both files exist and the PNG decodes.
-- [ ] 4.3 Placeholder generator: rounded square in the theme colour or neutral grey, with a centred first letter from a bundled font. Verify: a snapshot test renders "G" on #24292f, and the PNG is committed under `tests/snapshots/` for eyeballing.
+- [x] 4.1 Raster normalisation: decode PNG/ICO/JPEG/WebP, pad non-square images to square, and Lanczos-scale to 256×256 PNG. Verify: unit tests with a 16×16 ICO, a 512×512 PNG and a 300×200 JPEG check the output is 256×256 and not stretched.
+- [x] 4.2 SVG handling: copy the SVG to scalable and rasterise to 256 via resvg. Verify: a unit test checks both files exist and the PNG decodes.
+- [x] 4.3 Placeholder generator: an SVG rounded square in the theme colour or neutral grey, with a centred first letter in a system font. Verify: a snapshot test renders "G" on #24292f, and the PNG is committed under `tests/snapshots/` for eyeballing.
 
 ## 5. Desktop entry
 
-- [ ] 5.1 Entry model and writer: all keys from design decision 7, `X-Hermit-*` keys, value escaping, `Exec` quoting with `%` doubling, and atomic write via temp file plus rename. Verify: unit tests for escaping hostile names (newlines, `%`, quotes, `;`), and `desktop-file-validate` passes on generated output (install `desktop-file-utils` if missing).
-- [ ] 5.2 `browser` module: build the Chromium command line for shared (`--profile-directory=Default`) and isolated profiles and for shortcut URLs, and derive `StartupWMClass` per design decision 3. Verify: unit tests assert exact argument vectors, and assert the derived app_id equals every value measured in FINDINGS.md.
-- [ ] 5.3 Entry reader for hermit's own files (reads the `X-Hermit-*` keys, ignores files without `X-Hermit-Id`). Verify: round-trip test write → read gives the same model.
+- [x] 5.1 Entry model and writer: all keys from design decision 7, `X-Hermit-*` keys, value escaping, `Exec` quoting with `%` doubling, and atomic write via temp file plus rename. Verify: unit tests for escaping hostile names (newlines, `%`, quotes, `;`), and `desktop-file-validate` passes on generated output (install `desktop-file-utils` if missing).
+- [x] 5.2 `browser` module: build the Chromium command line for shared (`--profile-directory=Default`) and isolated profiles and for shortcut URLs, and derive `StartupWMClass` per design decision 3. Verify: unit tests assert exact argument vectors, and assert the derived app_id equals every value measured in FINDINGS.md.
+- [x] 5.3 Entry reader for hermit's own files (reads the `X-Hermit-*` keys, ignores files without `X-Hermit-Id`). Verify: round-trip test write → read gives the same model.
 
 ## 6. Install command
 
