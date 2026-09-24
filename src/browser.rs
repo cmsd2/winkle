@@ -57,16 +57,23 @@ impl Profile {
 }
 
 /// The command line that opens `url` as an app window.
+///
+/// `argv[0]` must be the browser itself (`/snap/bin/chromium`), never a wrapper:
+/// Ubuntu's gnome-shell only matches a Chromium-snap window to a desktop entry
+/// whose executable is `/snap/bin/chromium` (LP:2007652), and otherwise shows the
+/// window under Chromium's icon (spikes/app-id/FINDINGS.md).
 pub fn launch_argv(browser: &Path, profile: &Profile, url: &Url) -> Vec<String> {
-    let profile_arg = match profile {
-        Profile::Shared => format!("--profile-directory={PROFILE_DIRECTORY}"),
-        Profile::Isolated(dir) => format!("--user-data-dir={}", dir.display()),
-    };
-    vec![
-        browser.display().to_string(),
-        profile_arg,
-        format!("--app={url}"),
-    ]
+    let mut argv = vec![browser.display().to_string()];
+    match profile {
+        Profile::Shared => argv.push(format!("--profile-directory={PROFILE_DIRECTORY}")),
+        Profile::Isolated(dir) => {
+            argv.push(format!("--user-data-dir={}", dir.display()));
+            // A new profile would otherwise open to Chromium's first-run screens.
+            argv.push("--no-first-run".into());
+        }
+    }
+    argv.push(format!("--app={url}"));
+    argv
 }
 
 /// The Wayland app_id Chromium gives an `--app=<url>` window, which GNOME
@@ -149,6 +156,7 @@ mod tests {
             [
                 "/snap/bin/chromium",
                 "--user-data-dir=/home/u/snap/chromium/common/winkle/app-hey-com",
+                "--no-first-run",
                 "--app=https://app.hey.com/imbox",
             ]
         );
@@ -166,9 +174,22 @@ mod tests {
             [
                 "/b",
                 "--user-data-dir=/p",
+                "--no-first-run",
                 "--app=https://x.example/compose?to=a&b=c"
             ]
         );
+    }
+
+    /// Ubuntu's window matching for the Chromium snap needs the browser itself as
+    /// the entry's executable (LP:2007652), so nothing may be put in front of it.
+    #[test]
+    fn browser_is_always_the_executable() {
+        let browser = Path::new(crate::paths::DEFAULT_BROWSER);
+        for profile in [Profile::Shared, Profile::Isolated(PathBuf::from("/p"))] {
+            let argv = launch_argv(browser, &profile, &url("https://github.com/"));
+            assert_eq!(argv[0], "/snap/bin/chromium", "{profile:?}");
+            assert_eq!(argv.last().unwrap(), "--app=https://github.com/");
+        }
     }
 
     #[test]

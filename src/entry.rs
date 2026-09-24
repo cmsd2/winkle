@@ -79,7 +79,10 @@ impl AppEntry {
         out.kv("Icon", &Paths::icon_name(&self.id));
         out.kv("Exec", &escape_string(&exec_line(&self.exec)));
         out.kv("StartupWMClass", &escape_string(&self.startup_wm_class));
-        out.kv("StartupNotify", "true");
+        // A launch handed to an already-running Chromium never claims GNOME's
+        // activation token, so with `true` the dock icon only appears after a
+        // ~10 s timeout (spikes/app-id/FINDINGS.md).
+        out.kv("StartupNotify", "false");
         out.kv("Terminal", "false");
         out.kv("Categories", "Network;");
         out.kv("Keywords", &escape_list(&self.keywords));

@@ -211,6 +211,7 @@ fn install_writes_a_valid_entry_and_icon() {
         "Actions=shortcut-1;uninstall;".into(),
         "X-Winkle-Id=example".into(),
         "X-Winkle-Profile=shared".into(),
+        "StartupNotify=false".into(),
         "[Desktop Action shortcut-1]\nName=Compose".into(),
         format!(
             "Exec={} --profile-directory=Default --app=http://127.0.0.1:{port}/compose",
@@ -265,7 +266,7 @@ fn isolated_install_gets_its_own_profile() {
     let entry = fs::read_to_string(env.desktop_file("iso")).unwrap();
     assert!(
         entry.contains(&format!(
-            "--user-data-dir={}",
+            "--user-data-dir={} --no-first-run --app=",
             env.profile_dir("iso").display()
         )),
         "{entry}"

@@ -9,10 +9,12 @@ Built for Ubuntu 26.04 (GNOME on Wayland) with the Chromium snap.
 ## Install
 
 ```bash
-cargo install --path .
+cargo install winkle
 ```
 
-This puts `winkle` in `~/.cargo/bin`. Each app's Uninstall action runs winkle by that path,
+To build from a clone of this repository instead, run `cargo install --path .`.
+
+Either way this puts `winkle` in `~/.cargo/bin`. Each app's Uninstall action runs winkle by that path,
 so install it there before installing apps. If you move it later, reinstall your apps with
 `--force`.
 
@@ -91,7 +93,7 @@ Everything is in your home directory:
 
 - **Shortcut windows get their own dock icon.** Right-click shortcuts (such as HEY's "Write an
   email") open windows that don't group under the app's icon: Chromium gives every URL
-  path its own window ID. See `spikes/app-id/FINDINGS.md`.
+  path its own window ID. See [the app-id spike findings](https://github.com/cmsd2/winkle/blob/main/spikes/app-id/FINDINGS.md).
 - **Sites behind a login may give the login page's icon.** winkle fetches sites without
   your logins. For example, `mail.google.com` redirects to Google's sign-in page, whose
   small favicon winkle then uses. Pass `--icon` to choose a better one. The app itself still
@@ -102,10 +104,14 @@ Everything is in your home directory:
   Chromium downloads its Widevine DRM module shortly after its first start, but on Linux it
   only loads the module at startup. Until the next restart, Play does nothing on those
   sites, in a tab or in a winkle app. Restart Chromium once (`chrome://restart`) and they work.
-  See `spikes/eme/FINDINGS.md`.
+  See [the DRM spike findings](https://github.com/cmsd2/winkle/blob/main/spikes/eme/FINDINGS.md).
+- **Apps installed before 0.1.0 should be reinstalled.** Earlier development builds wrote
+  entries whose dock icon appeared about 10 seconds late, and isolated apps opened to Chromium's
+  first-run screen. Run `winkle install <url> --force` (adding `--isolated` where it applied)
+  to refresh them; isolated apps keep their logins.
 - **winkle can't close apps.** Snap confinement stops other programs from signalling
   Chromium, so close an isolated app yourself before purging its data.
-- **Chromium snap on GNOME only** for now. See `docs/roadmap.md` for what's next.
+- **Chromium snap on GNOME only** for now. See [the roadmap](https://github.com/cmsd2/winkle/blob/main/docs/roadmap.md) for what's next.
 
 ## Development
 

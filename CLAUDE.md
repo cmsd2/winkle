@@ -24,6 +24,10 @@ whole lifecycle: discovery, install, use, uninstall.
   `~/.local/share/icons/hicolor`, launching `chromium --app=URL`.
 - `StartupWMClass` must match the Wayland app_id Chromium actually assigns, or the
   dock won't group windows with the icon. Verify empirically (first spike).
+- `Exec` must start `/snap/bin/chromium` directly, with no wrapper: Ubuntu's gnome-shell
+  only matches Chromium-snap windows to entries whose executable is `/snap/bin/chromium`
+  (LP:2007652). Entries use `StartupNotify=false`, or launches handed to a running
+  Chromium leave the dock icon missing for ~10 s. See `spikes/app-id/FINDINGS.md`.
 - Metadata from the site's web app manifest (name, icons, theme colour, start_url,
   scope, shortcuts → desktop Actions), falling back to apple-touch-icon / favicon.
 - Profile per app is a choice: shared main profile (already logged in) or isolated.
