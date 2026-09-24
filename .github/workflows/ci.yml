@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  # Project rule: zero errors and zero warnings.
+  RUSTFLAGS: -D warnings
+
+jobs:
+  check:
+    name: fmt, clippy, build, test (${{ matrix.runner }})
+    strategy:
+      fail-fast: false
+      matrix:
+        # winkle's main target is arm64 (Snapdragon laptops); keep x86-64 covered too.
+        runner: [ubuntu-latest, ubuntu-24.04-arm]
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install test dependencies
+        # desktop-file-validate checks generated entries; the placeholder icon
+        # test renders text, so it needs at least one system font.
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends desktop-file-utils fonts-dejavu-core
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: cargo fmt --check
+        run: cargo fmt --check
+
+      - name: cargo clippy
+        run: cargo clippy --all-targets -- -D warnings
+
+      - name: cargo build
+        run: cargo build --all-targets --locked
+
+      - name: cargo test
+        run: cargo test --locked
