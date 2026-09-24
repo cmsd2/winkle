@@ -52,3 +52,43 @@ case e), a throwaway desktop entry with
 and `StartupWMClass=chrome-github.com__-Default` was launched with `gtk-launch`.
 The window appeared under the entry's own (star) icon in the dock, separate from
 Chromium's. **Grouping works for shared-profile apps, including forwarded launches.**
+
+## Dock icon appears ~10 s late for shared-profile apps
+
+Symptom: launching a shared-profile app (GitHub, Spotify) opens a usable window
+at once, but the busy cursor spins and the app's dock icon only appears ~10 s
+later. Isolated apps (HEY) show their icon immediately.
+
+Cause, from gnome-shell 50.1-0ubuntu1 source (`src/shell-app.c`):
+
+- A launch with a start-up sequence puts the app in `SHELL_APP_STATE_STARTING`.
+- `shell_app_sync_running_state()` does nothing while an app is STARTING, so a
+  window arriving for it doesn't make it RUNNING. Only completion of the start-up
+  sequence does (`_shell_app_handle_startup_sequence`): the launched program
+  claiming the activation token, or the sequence timing out.
+- An isolated app is a fresh Chromium process that claims the token, so its
+  sequence completes at once. A shared-profile launch is handed to the running
+  browser ("Opening in existing browser session"), which doesn't claim the token,
+  so the app stays STARTING (spinner, no dock icon) until the timeout.
+
+Matching itself is fine: `probe-forwarded.sh` shows the forwarded window's
+first request after creation is `set_app_id("chrome-github.com__-Default")`, and
+gnome-shell matches WM_CLASS against `StartupWMClass` first.
+
+Ubuntu patch (LP:2007652) in `get_app_from_window_wmclass`: for windows from the
+Chromium snap, an entry matched by `StartupWMClass` is only accepted if its Exec
+executable is `/snap/bin/chromium` or `/snap/bin/chromium_*`. **winkle must never
+wrap the launch command** (e.g. a `winkle launch` shim); the window would fall
+back to Chromium's icon.
+
+Test (fresh desktop IDs, direct `/snap/bin/chromium` Exec, main Chromium running):
+
+| Entry | StartupNotify | Result |
+|---|---|---|
+| Spike C | true | spinner, icon after ~10 s |
+| Spike D | false | no spinner, icon immediately |
+
+**Fix:** `StartupNotify=false` in winkle's entries.
+
+Testing gotcha: editing an already-installed entry in place gave inconsistent
+results (gnome-shell kept launching a stale copy). Use fresh desktop IDs for A/B tests.
