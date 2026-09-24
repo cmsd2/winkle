@@ -1,0 +1,46 @@
+{
+  "skill_name": "release",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "let's do a dry run of the first winkle release to crates.io. don't push or publish anything, i just want to see it would work",
+      "expected_output": "Releases the existing 0.1.0 without bumping; creates CHANGELOG.md (Keep a Changelog, user-facing entries); commits and tags v0.1.0 locally; runs the zero-warning checks and cargo publish --dry-run; does not push, publish or create a GitHub release; reports clearly that nothing left the machine.",
+      "files": [],
+      "assertions": [
+        "Version stays 0.1.0 (no bump on first release)",
+        "CHANGELOG.md created in Keep a Changelog format with a 0.1.0 section",
+        "Changelog leaves out internal work (spikes, OpenSpec, archive)",
+        "Local tag v0.1.0 created",
+        "Nothing pushed to origin (no new commits or tags)",
+        "Report says it was a dry run and nothing was pushed or published"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "we fixed the empty-list message since 0.1.0 went out. rehearse the next release for me (dry run only, nothing public)",
+      "expected_output": "Recommends/uses 0.1.1 (patch); CHANGELOG gets a 0.1.1 Fixed entry for the list message and omits the docs-only whitespace commit; compare link v0.1.0...v0.1.1; Cargo.toml and Cargo.lock at 0.1.1; local commit and v0.1.1 tag; cargo publish --dry-run; nothing pushed or published.",
+      "files": [],
+      "assertions": [
+        "Cargo.toml and Cargo.lock bumped to 0.1.1",
+        "0.1.1 changelog section has a Fixed entry about the empty-list message",
+        "0.1.1 section omits the docs-only roadmap whitespace commit",
+        "0.1.0 section kept and compare link v0.1.0...v0.1.1 added",
+        "Local tag v0.1.1 created",
+        "Nothing pushed to origin (no new commits or tags)",
+        "Report says it was a dry run and nothing was pushed or published"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "can you do a release dry run of winkle? just the rehearsal, no publishing",
+      "expected_output": "Detects the uncommitted change in src/main.rs and stops (or asks) before releasing; does not commit the stray debugging line into a release commit; nothing pushed or published.",
+      "files": [],
+      "assertions": [
+        "Stray debugging line never committed",
+        "No release tag created",
+        "Report points out the uncommitted change in src/main.rs",
+        "Nothing pushed to origin (no new commits or tags)"
+      ]
+    }
+  ]
+}
