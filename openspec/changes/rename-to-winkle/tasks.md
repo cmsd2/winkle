@@ -28,4 +28,4 @@
 ## 6. Hosting renames
 
 - [x] 6.1 Rename the GitHub repo with `gh repo rename winkle`, update `origin`, and set the repository URL in Cargo.toml. Verify: `gh repo view cmsd2/winkle` works, `git remote get-url origin` is `https://github.com/cmsd2/winkle.git`, and the old URL redirects. Commit and push the Cargo.toml change after the checks in 4.1.
-- [ ] 6.2 Last: move `~/Development/hermit` to `~/Development/winkle` and move the session there. Verify: `git -C ~/Development/winkle status -sb` is clean and tracks `origin/main`, and `cargo test` passes from the new path.
+- [x] 6.2 Last: move `~/Development/hermit` to `~/Development/winkle` and move the session there. Verify: `git -C ~/Development/winkle status -sb` is clean and tracks `origin/main`, and `cargo test` passes from the new path.
