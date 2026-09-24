@@ -62,7 +62,7 @@
 
 ## 9. Docs and end-to-end checks
 
-- [ ] 9.1 README.md: install hermit (`cargo install --path .`), usage for install/list/remove, profile modes, what data remove keeps, and the known limitations from design.md. Verify: every command in the README runs as written against a real site.
+- [x] 9.1 README.md: install hermit (`cargo install --path .`), usage for install/list/remove, profile modes, what data remove keeps, and the known limitations from design.md. Verify: every command in the README runs as written against a real site.
 - [ ] 9.2 Manual acceptance on the real desktop, recorded as a checklist in `docs/acceptance/mvp.md`:
   - install `github.com` (shared) and `app.hey.com` (isolated)
   - both appear in the grid and in search by name and host
