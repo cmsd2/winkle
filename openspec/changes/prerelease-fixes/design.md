@@ -65,10 +65,12 @@ winkle appends `--winkle-entry=<8 hex digits>` to every launch command line, mai
 - **Executable unchanged:** `Exec` still starts with `/snap/bin/chromium` (decision 3).
 - **Hash function:** a small, stable one written in-crate (FNV-1a, 64-bit). It doesn't need to be cryptographic, just stable across builds so identical entries hash identically. std's `DefaultHasher` isn't guaranteed stable across Rust versions, so it isn't used.
 
+**Limitation: the app grid.** Tested on the desktop, the hash makes launches from Activities search use the new entry after the reload. The app grid doesn't: on `installed-changed` it rebuilds its layout but reuses its existing `AppIcon` for any ID it already shows (`js/ui/appDisplay.js`, `this._items.get(appId)`), and that icon keeps the old `ShellApp`, and so the old entry, until the next login. winkle can't reach that object. The README documents it (the user chose this over making `--force` delete, wait and rewrite, since the grid's rebuild can be deferred for up to about 20 s). It only affects updates to installed apps, never fresh installs.
+
 **Alternatives rejected:**
 - A revision in the icon name: it also refreshes GTK's icon cache, but needs old icon files tracked and cleaned up. Worth revisiting when `winkle refresh` updates icons.
 - A revision in the Comment: user-visible text.
-- Delete, wait more than 5 s, then rewrite: makes `--force` slow and racy.
+- Delete, wait, then rewrite: would also clear the app grid, but the grid rebuild is deferred (up to about 20 s while the overview is hidden), making `--force` slow and unreliable.
 
 ## Risks / Trade-offs
 

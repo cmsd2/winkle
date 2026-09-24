@@ -29,7 +29,7 @@
 
   Verify: every GitHub link in the README returns HTTP 200 after push, and `grep -nE '`(spikes|docs)/' README.md` finds no unlinked paths.
 
-- [ ] 4.3 Check the README's pre-0.1.0 note still holds with the cache-busting argument: `--force` alone refreshes apps, with no logout. Keep the note if so; otherwise fix it. Verify: the note matches the behaviour confirmed in task 6.4.
+- [x] 4.3 Check the README's pre-0.1.0 note still holds with the cache-busting argument: `--force` alone refreshes apps, with no logout. Keep the note if so; otherwise fix it. Verify: the note matches the behaviour confirmed in task 6.4.
 
 ## 5. Checks, commit, push
 
@@ -38,6 +38,6 @@
 ## 6. Refresh installed apps and confirm on the desktop (with the user)
 
 - [x] 6.1 `cargo install --path .`, then `winkle install --force` for GitHub, Spotify and HEY (`--isolated`). Verify: each entry has `StartupNotify=false`, and HEY's `Exec` includes `--no-first-run`.
-- [ ] 6.2 The user launches GitHub and Spotify from the app grid while Chromium is running, and confirms the dock icon appears with the window and there's no lingering spinner. Verify: recorded in `docs/acceptance/prerelease-fixes.md`.
-- [ ] 6.3 Install a new isolated app with a fresh profile (e.g. `winkle install example.com --isolated --id first-run-check`). The user confirms it opens straight to the site; then remove it with `--purge`. Verify: recorded in the same acceptance file, and the test app is gone from `winkle list`.
-- [ ] 6.4 With the new build: `winkle install --force` for Spotify, and move GitHub back from the temporary `github` ID to `github-com` (`winkle remove github`, then `winkle install github.com`). Then change only a GNOME-uncompared field on one app (e.g. temporarily install Spotify again with `--force` after toggling a test build's `StartupNotify`), or, simpler, confirm with the user that Spotify's icon now appears immediately without logging out. Verify: recorded in `docs/acceptance/prerelease-fixes.md`.
+- [x] 6.2 The user launches GitHub and Spotify from the app grid while Chromium is running, and confirms the dock icon appears with the window and there's no lingering spinner. Verify: recorded in `docs/acceptance/prerelease-fixes.md`.
+- [x] 6.3 Install a new isolated app with a fresh profile (e.g. `winkle install example.com --isolated --id first-run-check`). The user confirms it opens straight to the site; then remove it with `--purge`. Verify: recorded in the same acceptance file, and the test app is gone from `winkle list`.
+- [x] 6.4 With the new build: `winkle install --force` for Spotify, and move GitHub back from the temporary `github` ID to `github-com` (`winkle remove github`, then `winkle install github.com`). Then change only a GNOME-uncompared field on one app (e.g. temporarily install Spotify again with `--force` after toggling a test build's `StartupNotify`), or, simpler, confirm with the user that Spotify's icon now appears immediately without logging out. Verify: recorded in `docs/acceptance/prerelease-fixes.md`.

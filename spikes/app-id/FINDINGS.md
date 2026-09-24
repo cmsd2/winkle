@@ -116,3 +116,23 @@ ID got a fresh `ShellApp`.
 Consequence: rewriting an entry in place isn't enough when only those fields
 change. Either the old entry must disappear from the cache first (delete, wait more
 than 5 s, rewrite), or a compared field must change.
+
+### The app grid holds on to the old app object too
+
+With the `--winkle-entry=<hash>` command-line argument, `app_is_stale()` notices
+every edit, and `ShellAppSystem` rebuilds the app. Tested: after
+`winkle install open.spotify.com --force` (no logout), launching Spotify from
+**Activities search** used the new entry (`StartupNotify=false`, icon at once).
+Launching it from the **app grid** still used the old one.
+
+Cause, from `js/ui/appDisplay.js` (gnome-shell 50.1): on `installed-changed` the
+grid queues a redisplay (deferred work, which can wait until the overview is
+shown), and `_loadApps()` reuses the existing `AppIcon` for any app ID already in
+`this._items`. That icon keeps its original `ShellApp`, so the grid launches the
+entry that was current when the icon was created, normally at login.
+
+winkle documents this rather than working around it: after `--force`, the app
+grid catches up at the next login. Fresh installs are unaffected. Both behaviours
+could be reported upstream:
+- `app_is_stale()` ignores keys such as `StartupNotify`
+- the app grid reuses icons whose `ShellApp` has been replaced

@@ -105,10 +105,14 @@ Everything is in your home directory:
   only loads the module at startup. Until the next restart, Play does nothing on those
   sites, in a tab or in a winkle app. Restart Chromium once (`chrome://restart`) and they work.
   See [the DRM spike findings](https://github.com/cmsd2/winkle/blob/main/spikes/eme/FINDINGS.md).
+- **After `winkle install --force`, the app grid may launch the old version until you log in
+  again.** Activities search picks up the change within a few seconds, but GNOME Shell's app
+  grid holds on to the entry it loaded at login. Log out and back in to refresh it. Fresh
+  installs aren't affected.
 - **Apps installed before 0.1.0 should be reinstalled.** Earlier development builds wrote
   entries whose dock icon appeared about 10 seconds late, and isolated apps opened to Chromium's
   first-run screen. Run `winkle install <url> --force` (adding `--isolated` where it applied)
-  to refresh them; isolated apps keep their logins.
+  to refresh them, then log out and back in once (see above). Isolated apps keep their logins.
 - **winkle can't close apps.** Snap confinement stops other programs from signalling
   Chromium, so close an isolated app yourself before purging its data.
 - **Chromium snap on GNOME only** for now. See [the roadmap](https://github.com/cmsd2/winkle/blob/main/docs/roadmap.md) for what's next.

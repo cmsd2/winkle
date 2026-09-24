@@ -33,7 +33,7 @@ By default an app SHALL use the user's main Chromium profile (shared cookies and
 - **THEN** its window shows the site, not a Chromium welcome or terms-of-service screen
 
 ### Requirement: No silent overwrite
-Installing an id that is already installed SHALL fail unless `--force` is given. With `--force`, the existing app SHALL be replaced and its isolated profile, if any, kept. The replacement SHALL take effect in GNOME without the user logging out, whichever fields of the entry changed.
+Installing an id that is already installed SHALL fail unless `--force` is given. With `--force`, the existing app SHALL be replaced and its isolated profile, if any, kept. Whichever fields of the entry changed, the replacement SHALL take effect without the user logging out for launches from Activities search. The app grid MAY keep launching the previous entry until the next login; that is a GNOME Shell limitation, which the README documents.
 
 #### Scenario: Duplicate install
 - **WHEN** `github-com` is installed and the user runs `winkle install github.com` again
@@ -43,6 +43,6 @@ Installing an id that is already installed SHALL fail unless `--force` is given.
 - **WHEN** an isolated app is reinstalled with `--force`
 - **THEN** its profile directory, and so its logins, are unchanged
 
-#### Scenario: Forced reinstall takes effect without logging out
+#### Scenario: Forced reinstall takes effect in search without logging out
 - **WHEN** an app is reinstalled with `--force` and only a launch setting that GNOME doesn't compare changes (such as `StartupNotify`)
-- **THEN** launching the app from the app grid a few seconds later uses the new entry, without logging out
+- **THEN** launching the app from Activities search a few seconds later uses the new entry, without logging out
