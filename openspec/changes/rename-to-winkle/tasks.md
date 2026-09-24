@@ -22,10 +22,10 @@
 
 ## 5. Switch over on this machine (with the user)
 
-- [ ] 5.1 With the old binary, `hermit remove` GitHub, HEY and Spotify, keeping HEY's data; then `mv ~/snap/chromium/common/hermit/app-hey-com ~/snap/chromium/common/winkle/app-hey-com`. Verify: `hermit list` shows no apps, and the HEY profile exists under `winkle/`.
-- [ ] 5.2 `cargo install --path .`, reinstall the three apps with `winkle` (HEY with `--isolated`), then `cargo uninstall hermit`. Verify: `winkle list` shows all three, `command -v hermit` finds nothing, and the user confirms HEY is still logged in.
+- [x] 5.1 With the old binary, `hermit remove` GitHub, HEY and Spotify, keeping HEY's data; then `mv ~/snap/chromium/common/hermit/app-hey-com ~/snap/chromium/common/winkle/app-hey-com`. Verify: `hermit list` shows no apps, and the HEY profile exists under `winkle/`.
+- [x] 5.2 `cargo install --path .`, reinstall the three apps with `winkle` (HEY with `--isolated`), then `cargo uninstall hermit`. Verify: `winkle list` shows all three, `command -v hermit` finds nothing, and the user confirms HEY is still logged in.
 
 ## 6. Hosting renames
 
-- [ ] 6.1 Rename the GitHub repo with `gh repo rename winkle`, update `origin`, and set the repository URL in Cargo.toml. Verify: `gh repo view cmsd2/winkle` works, `git remote get-url origin` is `https://github.com/cmsd2/winkle.git`, and the old URL redirects. Commit and push the Cargo.toml change after the checks in 4.1.
+- [x] 6.1 Rename the GitHub repo with `gh repo rename winkle`, update `origin`, and set the repository URL in Cargo.toml. Verify: `gh repo view cmsd2/winkle` works, `git remote get-url origin` is `https://github.com/cmsd2/winkle.git`, and the old URL redirects. Commit and push the Cargo.toml change after the checks in 4.1.
 - [ ] 6.2 Last: move `~/Development/hermit` to `~/Development/winkle` and move the session there. Verify: `git -C ~/Development/winkle status -sb` is clean and tracks `origin/main`, and `cargo test` passes from the new path.
