@@ -14,6 +14,18 @@ use crate::paths::Paths;
 /// Every raster icon is installed at this size, in `hicolor/256x256/apps`.
 pub const SIZE: u32 = 256;
 
+/// Families for the placeholder letter, most preferred first. The SVG asks for
+/// these and then `sans-serif`, but resvg doesn't ask fontconfig what
+/// `sans-serif` means (it defaults to Arial), so it's pointed at an installed
+/// family instead.
+const SANS_SERIF_PREFERENCES: &[&str] = &[
+    "Ubuntu",
+    "Cantarell",
+    "Noto Sans",
+    "DejaVu Sans",
+    "Liberation Sans",
+];
+
 /// Neutral fallback background (GNOME's dark grey) when the site has no theme colour.
 const PLACEHOLDER_GREY: (u8, u8, u8) = (0x5e, 0x5c, 0x64);
 
@@ -103,9 +115,32 @@ pub fn normalise_raster(img: &DynamicImage) -> RgbaImage {
 pub fn rasterise_svg(svg: &[u8]) -> Result<Vec<u8>> {
     let mut opts = usvg::Options::default();
     if String::from_utf8_lossy(svg).contains("<text") {
-        opts.fontdb_mut().load_system_fonts();
+        let fonts = opts.fontdb_mut();
+        fonts.load_system_fonts();
+        use_installed_sans_serif(fonts);
     }
-    let tree = usvg::Tree::from_data(svg, &opts).context("invalid SVG icon")?;
+    render_svg(svg, &opts)
+}
+
+/// Map `sans-serif` to the first preferred family that is installed, or to any
+/// installed family, so text never silently disappears.
+fn use_installed_sans_serif(fonts: &mut usvg::fontdb::Database) {
+    let installed: Vec<String> = fonts
+        .faces()
+        .flat_map(|face| face.families.iter().map(|(name, _)| name.clone()))
+        .collect();
+    let choice = SANS_SERIF_PREFERENCES
+        .iter()
+        .find(|preferred| installed.iter().any(|name| name == *preferred))
+        .map(|preferred| preferred.to_string())
+        .or_else(|| installed.first().cloned());
+    if let Some(family) = choice {
+        fonts.set_sans_serif_family(family);
+    }
+}
+
+fn render_svg(svg: &[u8], opts: &usvg::Options) -> Result<Vec<u8>> {
+    let tree = usvg::Tree::from_data(svg, opts).context("invalid SVG icon")?;
     let size = tree.size();
     let scale = SIZE as f32 / size.width().max(size.height());
     let dx = (SIZE as f32 - size.width() * scale) / 2.0;
@@ -303,6 +338,31 @@ mod tests {
         assert!(svg.contains(">C</text>"));
         assert!(svg.contains("#5e5c64"));
         assert!(placeholder_svg("", None).contains(">?</text>"));
+    }
+
+    fn white_pixels(png: &RgbaImage) -> usize {
+        png.pixels()
+            .filter(|p| p[0] > 240 && p[1] > 240 && p[2] > 240 && p[3] == 255)
+            .count()
+    }
+
+    /// CI runners have DejaVu but none of the families the placeholder names;
+    /// the letter must still be drawn.
+    #[test]
+    fn placeholder_letter_is_drawn_with_only_dejavu_installed() {
+        let dejavu = std::path::Path::new("/usr/share/fonts/truetype/dejavu");
+        if !dejavu.is_dir() {
+            eprintln!("skipping: {} not installed", dejavu.display());
+            return;
+        }
+        let mut opts = usvg::Options::default();
+        let fonts = opts.fontdb_mut();
+        fonts.load_fonts_dir(dejavu);
+        use_installed_sans_serif(fonts);
+        let svg = placeholder_svg("GitHub", Some("#24292f"));
+        let png = decode(&render_svg(svg.as_bytes(), &opts).unwrap());
+        let drawn = white_pixels(&png);
+        assert!(drawn > 1500, "letter was not drawn ({drawn} white pixels)");
     }
 
     /// Renders the placeholder snapshot for eyeballing. Pixel checks keep it
