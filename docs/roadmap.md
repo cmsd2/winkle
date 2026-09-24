@@ -4,7 +4,7 @@ Where hermit is heading. Each milestone becomes one or more OpenSpec changes und
 `openspec/changes/`, with its own specs; this page is direction, not a contract, and
 the order may shift as we learn.
 
-1. **MVP** (change `mvp`): install, list and remove; manifest-driven metadata; dock grouping; shared or isolated profiles; shortcut actions; Uninstall from the right-click menu.
+1. **MVP** ✅ done (archived as `openspec/changes/archive/2026-09-24-mvp`): install, list and remove; manifest-driven metadata; dock grouping; shared or isolated profiles; shortcut actions; Uninstall from the right-click menu.
 2. **Everyday polish**
    - `hermit refresh` updates names, icons and shortcuts from the site.
    - `hermit doctor` finds broken entries, a moved `hermit` binary, missing icons or stale dock pins.

@@ -30,7 +30,7 @@ Out of scope for the MVP: GNOME search-provider discovery, a curated catalogue, 
 
 ## Roadmap
 
-This change is Milestone 1 of the roadmap in [docs/roadmap.md](../../../docs/roadmap.md). Later milestones will be separate changes.
+This change is Milestone 1 of the roadmap in [docs/roadmap.md](../../../../docs/roadmap.md). Later milestones will be separate changes.
 
 ## Impact
 

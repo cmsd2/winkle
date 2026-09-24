@@ -10,19 +10,21 @@ hermit install github.com
 hermit install app.hey.com --isolated
 ```
 
+Result: **all 11 checks passed** (2026-09-24), confirmed by the user.
+
 | # | Check | Result | Notes |
 |---|---|---|---|
-| 1 | Both appear in the app grid with their own icons | | |
-| 2 | Activities search finds them by name ("GitHub", "HEY") | | |
-| 3 | Activities search finds them by host ("github.com", "app.hey.com") | | |
-| 4 | Both launch with no tabs, address bar or toolbar | | |
-| 5 | Dock: each app window sits under its own icon, separate from Chromium's, with a normal Chromium window also open | | |
-| 6 | Pin GitHub; with it running, its Super+number focuses the existing window | | |
-| 7 | HEY right-click → "Write an email" opens an app window (may get its own dock icon: known limitation) | | |
-| 8 | HEY (isolated): log in, close, relaunch → still logged in; main Chromium not logged in to HEY by this | | |
-| 9 | GitHub right-click → Uninstall → Uninstall: app gone from grid, search and dock; notification shown | | |
-| 10 | HEY right-click → Uninstall shows "Uninstall and Delete Data"; choosing it with HEY open shows an error and removes nothing | | |
-| 11 | Close HEY, repeat 10: app and `~/snap/chromium/common/hermit/app-hey-com` are gone | | |
+| 1 | Both appear in the app grid with their own icons | ✅ pass | |
+| 2 | Activities search finds them by name ("GitHub", "HEY") | ✅ pass | |
+| 3 | Activities search finds them by host ("github.com", "app.hey.com") | ✅ pass | |
+| 4 | Both launch with no tabs, address bar or toolbar | ✅ pass | |
+| 5 | Dock: each app window sits under its own icon, separate from Chromium's, with a normal Chromium window also open | ✅ pass | |
+| 6 | Pin GitHub; with it running, its Super+number focuses the existing window | ✅ pass | |
+| 7 | HEY right-click → "Write an email" opens an app window (may get its own dock icon: known limitation) | ✅ pass | |
+| 8 | HEY (isolated): log in, close, relaunch → still logged in; main Chromium not logged in to HEY by this | ✅ pass | |
+| 9 | GitHub right-click → Uninstall → Uninstall: app gone from grid, search and dock; notification shown | ✅ pass | |
+| 10 | HEY right-click → Uninstall shows "Uninstall and Delete Data"; choosing it with HEY open shows an error and removes nothing | ✅ pass | |
+| 11 | Close HEY, repeat 10: app and `~/snap/chromium/common/hermit/app-hey-com` are gone | ✅ pass | |
 
 ## Extra: Spotify (shared)
 
