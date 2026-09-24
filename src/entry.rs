@@ -62,8 +62,29 @@ pub struct InstalledShortcut {
     pub url: Url,
 }
 
+/// Command-line switch carrying a hash of the rest of the entry. Chromium ignores
+/// it; gnome-shell compares launch command lines (but not most other keys) when
+/// deciding whether an edited entry needs reloading, so any change to the entry
+/// changes this and gets noticed without logging out (spikes/app-id/FINDINGS.md).
+pub const ENTRY_HASH_SWITCH: &str = "--winkle-entry";
+
 impl AppEntry {
     pub fn to_desktop_file(&self) -> String {
+        let hash = entry_hash(&self.render(None));
+        self.render(Some(&hash))
+    }
+
+    /// Render the entry, inserting `--winkle-entry=<hash>` before each browser
+    /// launch's final `--app=` argument when a hash is given.
+    fn render(&self, hash: Option<&str>) -> String {
+        let browser_exec = |argv: &[String]| {
+            let mut argv = argv.to_vec();
+            if let Some(hash) = hash {
+                let at = argv.len().saturating_sub(1);
+                argv.insert(at, format!("{ENTRY_HASH_SWITCH}={hash}"));
+            }
+            escape_string(&exec_line(&argv))
+        };
         let host = self.url.host_str().unwrap_or_default();
         let mut actions: Vec<String> = (1..=self.shortcuts.len())
             .map(|i| format!("shortcut-{i}"))
@@ -77,7 +98,7 @@ impl AppEntry {
         out.kv("Name", &escape_string(&self.name));
         out.kv("Comment", &escape_string(&format!("Web app for {host}")));
         out.kv("Icon", &Paths::icon_name(&self.id));
-        out.kv("Exec", &escape_string(&exec_line(&self.exec)));
+        out.kv("Exec", &browser_exec(&self.exec));
         out.kv("StartupWMClass", &escape_string(&self.startup_wm_class));
         // A launch handed to an already-running Chromium never claims GNOME's
         // activation token, so with `true` the dock icon only appears after a
@@ -95,7 +116,7 @@ impl AppEntry {
         for (i, shortcut) in self.shortcuts.iter().enumerate() {
             out.group(&format!("Desktop Action shortcut-{}", i + 1));
             out.kv("Name", &escape_string(&shortcut.name));
-            out.kv("Exec", &escape_string(&exec_line(&shortcut.exec)));
+            out.kv("Exec", &browser_exec(&shortcut.exec));
             out.kv(&key("Url"), &escape_string(shortcut.url.as_str()));
         }
 
@@ -104,6 +125,17 @@ impl AppEntry {
         out.kv("Exec", &escape_string(&exec_line(&self.uninstall_exec)));
         out.0
     }
+}
+
+/// First 8 hex digits of the 64-bit FNV-1a hash of `text`: stable across builds
+/// and Rust versions, unlike std's `DefaultHasher`.
+fn entry_hash(text: &str) -> String {
+    let mut hash: u64 = 0xcbf2_9ce4_8422_2325;
+    for byte in text.bytes() {
+        hash ^= u64::from(byte);
+        hash = hash.wrapping_mul(0x0000_0100_0000_01b3);
+    }
+    format!("{hash:016x}")[..8].to_string()
 }
 
 #[derive(Default)]
@@ -430,6 +462,77 @@ mod tests {
     fn lists_split_on_unescaped_semicolons() {
         assert_eq!(split_list(r"a;b\;c;d"), ["a", "b;c", "d"]);
         assert_eq!(split_list("a;b"), ["a", "b"]);
+    }
+
+    fn exec_lines(contents: &str) -> Vec<&str> {
+        contents
+            .lines()
+            .filter_map(|l| l.strip_prefix("Exec="))
+            .collect()
+    }
+
+    #[test]
+    fn browser_launches_carry_the_entry_hash_before_app() {
+        let contents = sample("GitHub").to_desktop_file();
+        let execs = exec_lines(&contents);
+        assert_eq!(execs.len(), 3, "main, one shortcut, uninstall");
+        let hash = entry_hash(&sample("GitHub").render(None));
+        for exec in &execs[..2] {
+            assert!(exec.starts_with("/snap/bin/chromium "), "{exec}");
+            let switch = format!("{ENTRY_HASH_SWITCH}={hash} ");
+            let app = exec.find("--app=").expect("--app= present");
+            let at = exec.find(&switch).expect("hash switch present");
+            assert!(at < app, "hash switch comes before --app=: {exec}");
+        }
+        assert!(
+            !execs[2].contains(ENTRY_HASH_SWITCH),
+            "uninstall action has no hash"
+        );
+        assert_eq!(hash.len(), 8);
+    }
+
+    #[test]
+    fn entry_hash_is_stable_and_tracks_every_field() {
+        let base = sample("GitHub");
+        assert_eq!(base.to_desktop_file(), sample("GitHub").to_desktop_file());
+        let hash_of = |e: &AppEntry| entry_hash(&e.render(None));
+        let original = hash_of(&base);
+
+        let mut changed = vec![];
+        let mut e = base.clone();
+        e.name = "GitHub!".into();
+        changed.push(("name", e));
+        let mut e = base.clone();
+        e.startup_wm_class = "chrome-other-Default".into();
+        changed.push(("startup_wm_class", e));
+        let mut e = base.clone();
+        e.url = Url::parse("https://github.com/pulls").unwrap();
+        changed.push(("url", e));
+        let mut e = base.clone();
+        e.shortcuts[0].name = "Another".into();
+        changed.push(("shortcut", e));
+        let mut e = base.clone();
+        e.keywords.push("extra".into());
+        changed.push(("keywords", e));
+        for (field, entry) in changed {
+            assert_ne!(
+                hash_of(&entry),
+                original,
+                "changing {field} must change the hash"
+            );
+        }
+        // A change to a key gnome-shell doesn't compare (StartupNotify) must too.
+        let rendered = base
+            .render(None)
+            .replace("StartupNotify=false", "StartupNotify=true");
+        assert_ne!(entry_hash(&rendered), original);
+    }
+
+    #[test]
+    fn fnv1a_reference_values() {
+        // Known FNV-1a 64-bit values, truncated to 8 hex digits.
+        assert_eq!(entry_hash(""), "cbf29ce4");
+        assert_eq!(entry_hash("a"), "af63dc4c");
     }
 
     #[test]

@@ -202,9 +202,10 @@ fn install_writes_a_valid_entry_and_icon() {
     for expected in [
         "Name=Example App".to_string(),
         format!(
-            "Exec={} --profile-directory=Default \"--app=http://127.0.0.1:{port}/app?source=pwa\"",
+            "Exec={} --profile-directory=Default --winkle-entry=",
             chromium.display()
         ),
+        format!("\"--app=http://127.0.0.1:{port}/app?source=pwa\"\n"),
         "StartupWMClass=chrome-127.0.0.1__app-Default".into(),
         "Icon=winkle-example".into(),
         "Keywords=127.0.0.1;".into(),
@@ -213,10 +214,7 @@ fn install_writes_a_valid_entry_and_icon() {
         "X-Winkle-Profile=shared".into(),
         "StartupNotify=false".into(),
         "[Desktop Action shortcut-1]\nName=Compose".into(),
-        format!(
-            "Exec={} --profile-directory=Default --app=http://127.0.0.1:{port}/compose",
-            chromium.display()
-        ),
+        format!("--app=http://127.0.0.1:{port}/compose\n"),
     ] {
         assert!(
             entry.contains(&expected),
@@ -266,7 +264,7 @@ fn isolated_install_gets_its_own_profile() {
     let entry = fs::read_to_string(env.desktop_file("iso")).unwrap();
     assert!(
         entry.contains(&format!(
-            "--user-data-dir={} --no-first-run --app=",
+            "--user-data-dir={} --no-first-run --winkle-entry=",
             env.profile_dir("iso").display()
         )),
         "{entry}"

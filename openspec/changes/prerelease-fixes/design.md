@@ -52,8 +52,28 @@ A `winkle launch` shim on the roadmap would need another approach.
 - **Install section:** lead with `cargo install winkle`, and keep `cargo install --path .` as the from-source option.
 - **Links:** turn the `spikes/…` and `docs/…` mentions into links to `https://github.com/cmsd2/winkle/blob/main/…`. The existing relative `[LICENSE](LICENSE)` link stays, since LICENSE ships in the crate.
 
+### 5. A command-line hash so edited entries reach GNOME Shell
+When entries change, gnome-shell reloads its cache after about 5 s. But `app_is_stale()` (`shell-app-system.c`) only rebuilds an app if one of these changed:
+- should_show, filename, executable, commandline
+- name, description, display name, icon
+
+An edit to only `StartupNotify`, `StartupWMClass`, `Actions` or `Keywords` leaves GNOME launching the old entry until the user logs out.
+
+winkle appends `--winkle-entry=<8 hex digits>` to every launch command line, main and shortcuts, placed after the profile arguments and before `--app=`.
+- **The value:** the first 8 hex digits of a hash of the entry as written with that argument omitted. Any change to any field changes the command line, which makes GNOME rebuild the app, and an identical rewrite leaves it untouched.
+- **Chromium side:** Chromium ignores unknown switches (checked headless: renders normally, no warning). The window app_id comes only from `--app`, so grouping is unaffected.
+- **Executable unchanged:** `Exec` still starts with `/snap/bin/chromium` (decision 3).
+- **Hash function:** a small, stable one written in-crate (FNV-1a, 64-bit). It doesn't need to be cryptographic, just stable across builds so identical entries hash identically. std's `DefaultHasher` isn't guaranteed stable across Rust versions, so it isn't used.
+
+**Alternatives rejected:**
+- A revision in the icon name: it also refreshes GTK's icon cache, but needs old icon files tracked and cleaned up. Worth revisiting when `winkle refresh` updates icons.
+- A revision in the Comment: user-visible text.
+- Delete, wait more than 5 s, then rewrite: makes `--force` slow and racy.
+
 ## Risks / Trade-offs
 
+- **[A future Chromium rejects unknown switches]** → The desktop check in the tasks would catch it. The fallback is the icon-name revision.
+- **[The hash argument is noise in `ps` and in the `.desktop` file]** → Accepted. It's short, and its name says what it's for.
 - **[A future Chromium passes the activation token through, making the busy cursor useful again]** → Harmless: `false` still works. Revisit if cold-start feedback is missed.
 - **[`--no-first-run` also skips first-run imports and prompts that someone might want]** → Isolated apps are meant to start clean, so nothing is lost.
 - **[Existing installs keep the old behaviour until reinstalled]** → The README's known limitations note it. The only such installs are on the developer's machine, and the tasks refresh them.

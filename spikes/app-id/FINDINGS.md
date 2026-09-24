@@ -92,3 +92,27 @@ Test (fresh desktop IDs, direct `/snap/bin/chromium` Exec, main Chromium running
 
 Testing gotcha: editing an already-installed entry in place gave inconsistent
 results (gnome-shell kept launching a stale copy). Use fresh desktop IDs for A/B tests.
+
+## Why editing an installed entry sometimes has no effect
+
+gnome-shell 50.1 `src/shell-app-system.c`: when desktop entries change,
+`ShellAppCache` reloads them after a 5 s rate limit (`DEFAULT_TIMEOUT_SECONDS`) and
+emits `changed`. `installed_changed()` then drops apps that `app_is_stale()`
+reports as stale. `app_is_stale()` compares only these fields:
+- should_show, filename, executable, commandline
+- name, description, display name, icon
+
+It does **not** compare `StartupNotify`, `StartupWMClass`, `Actions`, `Keywords`
+and so on. An edit that changes only those leaves the old `GDesktopAppInfo` on the
+`ShellApp`, and launches keep using it until the user logs out and back in. (The
+`StartupWMClass` → app lookup is rebuilt from the cache, so window matching does
+see new classes; launching does not.)
+
+Observed: after `winkle install --force` changed only `StartupNotify`, GitHub and
+Spotify kept the ~10 s delay. HEY, whose command line also changed
+(`--no-first-run`), picked up the new entry. Reinstalling GitHub under a new desktop
+ID got a fresh `ShellApp`.
+
+Consequence: rewriting an entry in place isn't enough when only those fields
+change. Either the old entry must disappear from the cache first (delete, wait more
+than 5 s, rewrite), or a compared field must change.

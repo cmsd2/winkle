@@ -18,6 +18,7 @@ Using winkle day to day and dry-running the first release turned up four things 
   - `CHANGELOG.md` is added to the crate's `include` list.
   - The README's install section leads with `cargo install winkle`.
   - References to `spikes/` and `docs/` become links to GitHub, since those folders aren't in the package.
+- Every entry's command line carries `--winkle-entry=<hash>`, a hash of the rest of the entry, which Chromium ignores. gnome-shell only notices an edited entry if certain fields change, and the command line is one of them. So `winkle install --force` takes effect without logging out, whatever changed (see `spikes/app-id/FINDINGS.md`, "Why editing an installed entry sometimes has no effect").
 - Already-installed apps keep their old entries until reinstalled with `winkle install --force`. The README's known limitations say so for anyone who installed before 0.1.0 (in practice, only the developer's machine).
 
 ## Capabilities
@@ -26,13 +27,14 @@ Using winkle day to day and dry-running the first release turned up four things 
 <!-- none -->
 
 ### Modified Capabilities
-- `app-install`: two requirements change.
+- `app-install`: three requirements change.
   - "Windows group under the app's own icon" now requires the icon to appear as soon as the window does, with no lingering busy cursor, including when the launch is handed to a running Chromium.
   - "Profile modes" now requires isolated apps to open directly to the site without Chromium's first-run screens.
+  - "No silent overwrite" now requires a `--force` replacement to take effect in GNOME without logging out.
 
 ## Impact
 
-- **Code:** `src/entry.rs` (the `StartupNotify` value), `src/browser.rs` (the launch arguments for isolated profiles), and their unit and integration tests.
+- **Code:** `src/entry.rs` (the `StartupNotify` value and the entry hash), `src/browser.rs` (the launch arguments), and their unit and integration tests.
 - **Packaging and docs:** `Cargo.toml` (`include`), `README.md`.
 - **Users:** existing entries need `winkle install --force` to pick up both fixes. No data changes, and isolated profiles are kept.
 - **Dependencies:** none.

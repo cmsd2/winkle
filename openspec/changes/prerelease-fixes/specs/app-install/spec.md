@@ -31,3 +31,18 @@ By default an app SHALL use the user's main Chromium profile (shared cookies and
 #### Scenario: First launch of an isolated app skips Chromium's first-run screens
 - **WHEN** an app installed with `--isolated` is launched for the first time, with a brand-new profile
 - **THEN** its window shows the site, not a Chromium welcome or terms-of-service screen
+
+### Requirement: No silent overwrite
+Installing an id that is already installed SHALL fail unless `--force` is given. With `--force`, the existing app SHALL be replaced and its isolated profile, if any, kept. The replacement SHALL take effect in GNOME without the user logging out, whichever fields of the entry changed.
+
+#### Scenario: Duplicate install
+- **WHEN** `github-com` is installed and the user runs `winkle install github.com` again
+- **THEN** the command fails, says the app exists, and suggests `--force`
+
+#### Scenario: Forced reinstall keeps logins
+- **WHEN** an isolated app is reinstalled with `--force`
+- **THEN** its profile directory, and so its logins, are unchanged
+
+#### Scenario: Forced reinstall takes effect without logging out
+- **WHEN** an app is reinstalled with `--force` and only a launch setting that GNOME doesn't compare changes (such as `StartupNotify`)
+- **THEN** launching the app from the app grid a few seconds later uses the new entry, without logging out
