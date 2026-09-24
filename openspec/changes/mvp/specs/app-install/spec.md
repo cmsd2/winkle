@@ -56,7 +56,7 @@ Launching the app SHALL open the launch URL in a Chromium app window with no tab
 - **THEN** a window opens showing the launch URL with no browser UI
 
 ### Requirement: Windows group under the app's own icon
-Windows of an installed app SHALL be associated with that app, not with Chromium. The dock SHALL show the app's own icon for them, and the app SHALL be pinnable to the dock.
+Windows opened from the app's main launcher entry SHALL be associated with that app, not with Chromium. The dock SHALL show the app's own icon for them, and the app SHALL be pinnable to the dock. Windows opened from shortcut actions are exempt (see Shortcut actions).
 
 #### Scenario: Dock shows the app, not Chromium
 - **WHEN** the app is launched while a normal Chromium window is also open
@@ -78,11 +78,11 @@ By default an app SHALL use the user's main Chromium profile (shared cookies and
 - **THEN** the app is still logged in, and the main Chromium profile is unaffected
 
 ### Requirement: Shortcut actions
-Each collected manifest shortcut SHALL appear as an action in the app icon's right-click menu. It SHALL open that shortcut's URL as an app window of the same app with the same profile.
+Each collected manifest shortcut SHALL appear as an action in the app icon's right-click menu. It SHALL open that shortcut's URL as a Chromium app window (no browser UI) using the same profile as the app. Shortcut windows are not required to group under the app's dock icon, and MAY appear as a separate dock entry.
 
 #### Scenario: Right-click shortcut
 - **WHEN** the manifest defines a "New issue" shortcut to `/issues/new`
-- **THEN** right-clicking the app shows "New issue", which opens that URL in the app
+- **THEN** right-clicking the app shows "New issue", which opens that URL in an app window with the app's profile
 
 ### Requirement: Stays within the user's home
 Install SHALL write only under the user's data directories: `XDG_DATA_HOME`, defaulting to `~/.local/share`, and, for isolated profiles, the Chromium snap's per-user data area. It SHALL NOT require root and SHALL NOT modify files that hermit did not create.

@@ -2,8 +2,8 @@
 
 ## 1. Spike: Chromium window app_id
 
-- [ ] 1.1 Write `spikes/app-id/probe.sh`. It launches `/snap/bin/chromium --app=<url>` with a throwaway `--user-data-dir` under `~/snap/chromium/common/hermit-spike/` and `WAYLAND_DEBUG=client`, captures stderr, extracts the `xdg_toplevel.set_app_id(...)` value, then closes the window and deletes the throwaway profile. Verify: running it prints one app_id for `https://github.com/`.
-- [ ] 1.2 Use the probe to measure the app_id for each of these cases:
+- [x] 1.1 Write `spikes/app-id/probe.sh`. It launches `/snap/bin/chromium --app=<url>` with a throwaway `--user-data-dir` under `~/snap/chromium/common/hermit-spike/` and `WAYLAND_DEBUG=client`, captures stderr, extracts the `xdg_toplevel.set_app_id(...)` value, then closes the window and deletes the throwaway profile. Verify: running it prints one app_id for `https://github.com/`.
+- [x] 1.2 Use the probe to measure the app_id for each of these cases:
   - (a) plain `--app`
   - (b) `--app` plus `--class=hermit-test`
   - (c) two different URLs on the same host
@@ -11,8 +11,8 @@
   - (e) shared profile while a normal Chromium window is already open (the request is forwarded to the running process)
 
   Verify: `spikes/app-id/FINDINGS.md` has a table of case → app_id and says which strategy (A `--class` or B derived) works for shared and isolated profiles.
-- [ ] 1.3 Confirm grouping by hand. Write a throwaway desktop entry whose `StartupWMClass` is the measured value, launch it, and check the dock shows one icon, separate from Chromium's. Verify: result recorded in FINDINGS.md.
-- [ ] 1.4 Update design.md decision 3 with the chosen strategy and delete the rejected one. Verify: design.md no longer lists both as candidates.
+- [x] 1.3 Confirm grouping by hand, which also covers case (e). While the main Chromium is running, write a throwaway desktop entry with `--profile-directory=Default --app=https://github.com/` and `StartupWMClass=chrome-github.com__-Default`. Launch it and check the dock shows the entry's own icon, separate from Chromium's. Then remove the entry. Verify: result recorded in FINDINGS.md.
+- [x] 1.4 Update design.md decision 3 with the chosen strategy and delete the rejected one. Verify: design.md no longer lists both as candidates.
 
 ## 2. Project scaffolding
 
@@ -39,7 +39,7 @@
 ## 5. Desktop entry
 
 - [ ] 5.1 Entry model and writer: all keys from design decision 7, `X-Hermit-*` keys, value escaping, `Exec` quoting with `%` doubling, and atomic write via temp file plus rename. Verify: unit tests for escaping hostile names (newlines, `%`, quotes, `;`), and `desktop-file-validate` passes on generated output (install `desktop-file-utils` if missing).
-- [ ] 5.2 `browser` module: build the Chromium command line for shared and isolated profiles and for shortcut URLs, using the window strategy from task 1.4, and compute `StartupWMClass`. Verify: unit tests assert exact argument vectors for each case.
+- [ ] 5.2 `browser` module: build the Chromium command line for shared (`--profile-directory=Default`) and isolated profiles and for shortcut URLs, and derive `StartupWMClass` per design decision 3. Verify: unit tests assert exact argument vectors, and assert the derived app_id equals every value measured in FINDINGS.md.
 - [ ] 5.3 Entry reader for hermit's own files (reads the `X-Hermit-*` keys, ignores files without `X-Hermit-Id`). Verify: round-trip test write → read gives the same model.
 
 ## 6. Install command

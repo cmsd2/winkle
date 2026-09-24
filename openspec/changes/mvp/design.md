@@ -38,24 +38,25 @@ Each app is `$XDG_DATA_HOME/applications/hermit-<id>.desktop`. Its hermit-specif
 - *Alternative:* a TOML/JSON registry in `$XDG_DATA_HOME/hermit/`. Rejected for the MVP because of the duplicate source of truth. It can be revisited if we need data that doesn't fit in the entry.
 
 ### 2. `Exec` calls Chromium directly
-Launch lines are `/snap/bin/chromium --app=<url> [--user-data-dir=…] [--class=…]` rather than going through `hermit launch <id>`.
+Launch lines are `/snap/bin/chromium (--profile-directory=Default | --user-data-dir=…) --app=<url>` rather than going through `hermit launch <id>`.
 
 - *Why:* apps survive the hermit binary being moved or uninstalled, and there's no extra process at launch.
 - *Cost:* changing launch behaviour needs a rewrite of the entries. That's acceptable: `install --force` (and later `refresh`) regenerates them, and `X-Hermit-Version` lets a future version detect old entries.
 - *Exception:* the Uninstall action's `Exec` uses the **absolute path** of the hermit binary at install time (from `std::env::current_exe`), so it doesn't depend on the PATH of GNOME's launcher.
 
-### 3. Window matching: measured, not assumed (spike)
-GNOME links a window to an app when the window's Wayland app_id equals the desktop file ID or its `StartupWMClass`. What app_id does Chromium 153 on Wayland set for an `--app` window? Two candidate strategies:
+### 3. Window matching: derive Chromium's app_id
+GNOME links a window to an app when the window's Wayland app_id equals the desktop file ID or its `StartupWMClass`. The spike (`spikes/app-id/FINDINGS.md`) measured Chromium 153 on Wayland:
+- `--class` is **ignored**, so we can't choose the app_id ourselves.
+- The app_id is derived from the `--app` URL: `chrome-<host>_<path with every "/" replaced by "_">-<profile directory>`, with the query string dropped. For example, `https://github.com/notifications` gives `chrome-github.com__notifications-Default`.
 
-- **A, set it ourselves:** pass `--class=hermit-<id>` and set `StartupWMClass=hermit-<id>`. This is preferred if Chromium honours `--class` under Wayland, because it's stable and independent of the URL.
-- **B, derive it:** compute Chromium's own naming (believed to be of the form `chrome-<host>__<path>-<profile-dir>`) from the launch URL and profile, and write that into `StartupWMClass`. It's fragile if Chromium changes the scheme, and each shortcut URL gets its own app_id. So under B, shortcut windows wouldn't group under the app unless the desktop file lists them too, which it can't: `StartupWMClass` is single-valued.
-
-The spike (task 1) launches Chromium with `WAYLAND_DEBUG=client` and a throwaway `--user-data-dir`. A throwaway profile forces a fresh process rather than handing the request to a running Chromium. The spike then reads the `xdg_toplevel.set_app_id` request from the protocol log. It covers the shared-profile case too: does a request forwarded to an already-running Chromium get the same app_id? That tells us whether each shared-profile app needs its own `--class` or whether A even works there.
-
-The spike's findings are written to `spikes/app-id/FINDINGS.md`, and this section gets updated. The specs don't change either way, which is why this is a spike and not an open question.
+So hermit computes this value from the launch URL and writes it to `StartupWMClass`.
+- **Profile directory:** shared apps pass `--profile-directory=Default` explicitly, so the suffix doesn't depend on which profile Chromium last used. Isolated apps get a fresh user-data-dir whose only profile is `Default`.
+- **Shortcuts:** each shortcut URL has its own path and so its own app_id. Shortcut windows therefore don't group under the app's icon. The spec accepts this for the MVP; a per-app redirect-page launcher was considered and deferred (see roadmap, milestone 2).
+- **Not measured:** the case of a launch request forwarded to an already-running Chromium. The spike couldn't observe it because the running process doesn't have `WAYLAND_DEBUG` set. The manual grouping check (task 1.3) covers it by launching a shared-profile entry while the main browser is running.
+- **Alternatives rejected:** `--class` (ignored on Wayland); a hidden extra `.desktop` file per shortcut (adds a second dock icon while open, and more files to manage).
 
 ### 4. Profiles
-- **Shared:** no `--user-data-dir`, so Chromium's default profile.
+- **Shared:** no `--user-data-dir` (Chromium's own), plus `--profile-directory=Default` (see decision 3).
 - **Isolated:** `--user-data-dir=$HOME/snap/chromium/common/hermit/<id>`. It must be under the snap's area because the snap can't use hidden directories such as `~/.local/share`.
 - **"In use"** for the `--purge` guard means the `SingletonLock` symlink exists in that directory and points at a live PID on this host.
 
@@ -81,7 +82,7 @@ The spike's findings are written to `spikes/app-id/FINDINGS.md`, and this sectio
   - `Comment` ("Web app for <host>")
   - `Icon`
   - `Exec`
-  - `StartupWMClass` (per the spike)
+  - `StartupWMClass` (derived as in decision 3)
   - `StartupNotify=true`
   - `Categories=Network;WebBrowser;`, then trimmed to `Network;` in case `WebBrowser` makes GNOME offer it as a browser
   - `Keywords` (host plus name words)
@@ -120,7 +121,7 @@ Errors use `anyhow` at the edges and `thiserror` inside the library parts.
 
 ## Risks / Trade-offs
 
-- **[Chromium changes its app_id or `--class` behaviour in a snap update]** → The spike's findings are recorded, `X-Hermit-Version` lets a later `refresh` or `doctor` rewrite entries, and the roadmap's `hermit doctor` will check that grouping still works.
+- **[Chromium changes its app_id derivation in a snap update, or it differs for characters we haven't measured, such as ports, percent-encoding or trailing slashes]** → The derivation lives in one function with tests pinned to measured values; `spikes/app-id/probe.sh` re-measures quickly. `X-Hermit-Version` lets a later `refresh` or `doctor` rewrite entries, and the roadmap's `hermit doctor` will check that grouping still works.
 - **[Sites block non-browser fetches (Cloudflare challenges, login walls)]** → Fall back to HTML meta, then host name and placeholder icon; `--name`/`--icon` overrides; the warning says what happened.
 - **[Login-walled sites return the login page's metadata]** → Usually the same brand, so acceptable; `--force` with overrides fixes the rest.
 - **[Shared-profile apps opening while Chromium is closed start a full browser process]** → That's Chromium's behaviour and harmless; note it in the README.

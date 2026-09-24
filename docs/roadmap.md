@@ -8,6 +8,7 @@ the order may shift as we learn.
 2. **Everyday polish**
    - `hermit refresh` updates names, icons and shortcuts from the site.
    - `hermit doctor` finds broken entries, a moved `hermit` binary, missing icons or stale dock pins.
+   - Group shortcut windows under the app's icon, probably with a per-app local redirect page as the `--app` URL so every window gets the same app_id (the MVP drops this; see `spikes/app-id/FINDINGS.md`).
    - Activate-or-launch for arbitrary hotkeys (not only dock Super+1–9), probably via a small GNOME Shell extension.
 3. **Link routing**
    - hermit registers itself as the default browser and sends links to installed apps by domain and scope (for example `github.com/...` → the GitHub app); everything else goes on to the real browser.
