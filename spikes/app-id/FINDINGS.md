@@ -8,8 +8,8 @@ Chromium snap 153.0.8010.36, GNOME 50 on Wayland, arm64. Measured with
 | Case | Command | app_id |
 |---|---|---|
 | a. plain `--app` | `--app=https://github.com/` | `chrome-github.com__-Default` |
-| b. `--class` | `--app=https://github.com/ --class=hermit-test` | `chrome-github.com__-Default` (`--class` ignored) |
-| b2. `--class`, deep link | `--app=https://github.com/notifications --class=hermit-test` | `chrome-github.com__notifications-Default` |
+| b. `--class` | `--app=https://github.com/ --class=winkle-test` | `chrome-github.com__-Default` (`--class` ignored) |
+| b2. `--class`, deep link | `--app=https://github.com/notifications --class=winkle-test` | `chrome-github.com__notifications-Default` |
 | c1. deep link | `--app=https://github.com/notifications` | `chrome-github.com__notifications-Default` |
 | c2. other path, same host | `--app=https://github.com/pulls` | `chrome-github.com__pulls-Default` |
 | d. shortcut-style URL with query | `--app=https://github.com/issues/new?x=1` | `chrome-github.com__issues_new-Default` |
@@ -26,13 +26,13 @@ Chromium snap 153.0.8010.36, GNOME 50 on Wayland, arm64. Measured with
   so shared and isolated apps both end in `-Default` (unless the user's main
   profile is another directory).
 
-## Side finding: hermit cannot kill snap Chromium
+## Side finding: winkle cannot kill snap Chromium
 
 `kill`/`pkill` against the snap's processes fails with EPERM, even outside the
 Claude Code sandbox; it looks like the snap's AppArmor confinement. `chrome://quit`
 passed on the command line doesn't quit it either. Consequences:
 - Tooling can't close app windows. The probe now waits for the user to close them.
-- hermit must never rely on signalling Chromium, e.g. for `remove --purge` of a
+- winkle must never rely on signalling Chromium, e.g. for `remove --purge` of a
   running app. The design already only *reads* `SingletonLock`, which is fine.
 
 ## Decision

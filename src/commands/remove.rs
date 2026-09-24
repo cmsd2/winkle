@@ -34,7 +34,7 @@ pub struct Removal {
 }
 
 pub fn lookup(paths: &Paths, id: &str) -> Result<InstalledApp> {
-    let not_installed = || anyhow!("no hermit app `{id}` is installed (see `hermit list`)");
+    let not_installed = || anyhow!("no winkle app `{id}` is installed (see `winkle list`)");
     validate_id(id).map_err(|_| not_installed())?;
     let path = paths.desktop_file(id);
     if !path.exists() {
@@ -141,7 +141,7 @@ fn interactive(paths: &Paths, id: &str) -> Result<()> {
 }
 
 /// Chromium holds `SingletonLock`, a symlink to `<hostname>-<pid>`, while a
-/// profile is open. hermit can't signal snap Chromium, so it only checks.
+/// profile is open. winkle can't signal snap Chromium, so it only checks.
 fn profile_in_use(profile_dir: &Path) -> bool {
     let Ok(target) = std::fs::read_link(profile_dir.join("SingletonLock")) else {
         return false;

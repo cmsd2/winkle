@@ -1,4 +1,4 @@
-# hermit
+# winkle
 
 Make websites feel like native desktop apps on Ubuntu (GNOME, Wayland) across the
 whole lifecycle: discovery, install, use, uninstall.

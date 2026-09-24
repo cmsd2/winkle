@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Shows which websites are installed as hermit apps, with enough detail to manage them, in both human-readable and machine-readable form.
+Shows which websites are installed as winkle apps, with enough detail to manage them, in both human-readable and machine-readable form.
 
 ## Requirements
 

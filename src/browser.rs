@@ -7,7 +7,7 @@ use std::str::FromStr;
 
 use url::Url;
 
-/// The profile directory hermit pins for shared apps, and the only one in an
+/// The profile directory winkle pins for shared apps, and the only one in an
 /// isolated user-data-dir. It is the suffix of every window's app_id.
 pub const PROFILE_DIRECTORY: &str = "Default";
 
@@ -138,7 +138,7 @@ mod tests {
     #[test]
     fn isolated_argv() {
         let profile = Profile::Isolated(PathBuf::from(
-            "/home/u/snap/chromium/common/hermit/app-hey-com",
+            "/home/u/snap/chromium/common/winkle/app-hey-com",
         ));
         assert_eq!(
             launch_argv(
@@ -148,7 +148,7 @@ mod tests {
             ),
             [
                 "/snap/bin/chromium",
-                "--user-data-dir=/home/u/snap/chromium/common/hermit/app-hey-com",
+                "--user-data-dir=/home/u/snap/chromium/common/winkle/app-hey-com",
                 "--app=https://app.hey.com/imbox",
             ]
         );

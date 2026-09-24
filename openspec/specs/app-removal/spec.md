@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Uninstalls a hermit app cleanly, from the command line or from the app's own right-click menu, with a clear and safe rule for what data is deleted.
+Uninstalls a winkle app cleanly, from the command line or from the app's own right-click menu, with a clear and safe rule for what data is deleted.
 
 ## Requirements
 

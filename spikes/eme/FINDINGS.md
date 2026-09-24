@@ -1,6 +1,6 @@
-# Spike: why Spotify wouldn't play in a hermit app
+# Spike: why Spotify wouldn't play in a winkle app
 
-Symptom: Spotify web player (installed with hermit, shared profile) loads and shows
+Symptom: Spotify web player (installed with winkle, shared profile) loads and shows
 the library, but Play does nothing and the volume slider has no handle; the usual
 signs that the web player couldn't register this browser as a playback device.
 
@@ -15,7 +15,7 @@ signs that the web player couldn't register this browser as a playback device.
 - **Widevine missing**: Google's arm64 Widevine 4.10.3057.0 is downloaded in
   `~/snap/chromium/common/chromium/WidevineCdm/` and Chromium registers it.
 - **AppArmor**: no denials mentioning Widevine (only unrelated Vulkan ICD paths).
-- **hermit's launch**: the app is opened in the existing browser session
+- **winkle's launch**: the app is opened in the existing browser session
   ("Opening in existing browser session"), same process and profile as a tab.
 
 ## Observed (headless, `probe.html` over http://127.0.0.1)
@@ -35,7 +35,7 @@ when Widevine arrived can't use it. Headless runs started later could, which is
 why they got further.
 
 **Fix:** restart Chromium once (`chrome://restart`). Afterwards Spotify played in
-both a normal tab and the hermit app. Not a hermit bug; only hit on a fresh
+both a normal tab and the winkle app. Not a winkle bug; only hit on a fresh
 Chromium install, before its first restart.
 
 Side note: headless mode found Widevine but `createMediaKeys()` never settled,

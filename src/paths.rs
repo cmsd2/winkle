@@ -1,9 +1,15 @@
-//! Where hermit reads and writes. Everything is under the user's home.
+//! Where winkle reads and writes. Everything is under the user's home.
 
 use std::ffi::OsString;
 use std::path::{Path, PathBuf};
 
 use anyhow::{Context, Result, bail};
+
+/// The tool's name. Every file, key and variable name winkle uses derives from it.
+pub const APP_NAME: &str = "winkle";
+
+/// Environment variable overriding the browser executable (tests point it at a stub).
+pub const BROWSER_VAR: &str = "WINKLE_BROWSER";
 
 pub const DEFAULT_BROWSER: &str = "/snap/bin/chromium";
 
@@ -21,7 +27,7 @@ impl Paths {
 
     /// Resolve paths from environment variables, looked up with `var`.
     ///
-    /// `HERMIT_BROWSER` overrides the browser executable; tests point it at a stub.
+    /// [`BROWSER_VAR`] overrides the browser executable; tests point it at a stub.
     pub fn from_vars(var: impl Fn(&str) -> Option<OsString>) -> Result<Self> {
         let home = var("HOME")
             .filter(|h| !h.is_empty())
@@ -35,7 +41,7 @@ impl Paths {
             .map(PathBuf::from)
             .filter(|p| p.is_absolute())
             .unwrap_or_else(|| home.join(".local/share"));
-        let browser = var("HERMIT_BROWSER")
+        let browser = var(BROWSER_VAR)
             .filter(|b| !b.is_empty())
             .map(PathBuf::from)
             .unwrap_or_else(|| PathBuf::from(DEFAULT_BROWSER));
@@ -50,9 +56,9 @@ impl Paths {
         self.data_home.join("applications")
     }
 
-    /// The desktop file ID GNOME knows the app by, e.g. `hermit-github-com.desktop`.
+    /// The desktop file ID GNOME knows the app by, e.g. `winkle-github-com.desktop`.
     pub fn desktop_file_id(id: &str) -> String {
-        format!("hermit-{id}.desktop")
+        format!("{APP_NAME}-{id}.desktop")
     }
 
     pub fn desktop_file(&self, id: &str) -> PathBuf {
@@ -60,7 +66,7 @@ impl Paths {
     }
 
     pub fn icon_name(id: &str) -> String {
-        format!("hermit-{id}")
+        format!("{APP_NAME}-{id}")
     }
 
     pub fn hicolor_dir(&self) -> PathBuf {
@@ -82,14 +88,14 @@ impl Paths {
     /// Root of isolated profiles. It has to be inside the Chromium snap's own
     /// per-user area: the snap can't use hidden directories in `$HOME`.
     pub fn profiles_root(&self) -> PathBuf {
-        self.home.join("snap/chromium/common/hermit")
+        self.home.join("snap/chromium/common").join(APP_NAME)
     }
 
     pub fn profile_dir(&self, id: &str) -> PathBuf {
         self.profiles_root().join(id)
     }
 
-    /// True if `path` is inside `root` (lexically; both are built by hermit).
+    /// True if `path` is inside `root` (lexically; both are built by winkle).
     pub fn is_within(path: &Path, root: &Path) -> bool {
         path.starts_with(root) && path != root
     }
@@ -115,19 +121,19 @@ mod tests {
         assert_eq!(p.browser, PathBuf::from("/snap/bin/chromium"));
         assert_eq!(
             p.desktop_file("github-com"),
-            PathBuf::from("/home/u/.local/share/applications/hermit-github-com.desktop")
+            PathBuf::from("/home/u/.local/share/applications/winkle-github-com.desktop")
         );
         assert_eq!(
             p.icon_png("github-com"),
-            PathBuf::from("/home/u/.local/share/icons/hicolor/256x256/apps/hermit-github-com.png")
+            PathBuf::from("/home/u/.local/share/icons/hicolor/256x256/apps/winkle-github-com.png")
         );
         assert_eq!(
             p.icon_svg("github-com"),
-            PathBuf::from("/home/u/.local/share/icons/hicolor/scalable/apps/hermit-github-com.svg")
+            PathBuf::from("/home/u/.local/share/icons/hicolor/scalable/apps/winkle-github-com.svg")
         );
         assert_eq!(
             p.profile_dir("app-hey-com"),
-            PathBuf::from("/home/u/snap/chromium/common/hermit/app-hey-com")
+            PathBuf::from("/home/u/snap/chromium/common/winkle/app-hey-com")
         );
     }
 
@@ -136,7 +142,7 @@ mod tests {
         let p = paths(&[
             ("HOME", "/home/u"),
             ("XDG_DATA_HOME", "/tmp/data"),
-            ("HERMIT_BROWSER", "/tmp/stub-browser"),
+            (BROWSER_VAR, "/tmp/stub-browser"),
         ])
         .unwrap();
         assert_eq!(p.data_home, PathBuf::from("/tmp/data"));
@@ -157,6 +163,17 @@ mod tests {
     fn missing_home_is_an_error() {
         assert!(paths(&[]).is_err());
         assert!(paths(&[("HOME", "relative")]).is_err());
+    }
+
+    #[test]
+    fn names_derive_from_app_name() {
+        assert_eq!(APP_NAME, "winkle");
+        assert_eq!(BROWSER_VAR, format!("{}_BROWSER", APP_NAME.to_uppercase()));
+        assert_eq!(
+            Paths::desktop_file_id("github-com"),
+            "winkle-github-com.desktop"
+        );
+        assert_eq!(Paths::icon_name("github-com"), "winkle-github-com");
     }
 
     #[test]

@@ -9,7 +9,7 @@ use std::time::SystemTime;
 
 use anyhow::{Context, Result, bail};
 
-use crate::paths::Paths;
+use crate::paths::{APP_NAME, Paths};
 
 /// Make GNOME notice new or removed entries and icons without a re-login.
 pub fn refresh(paths: &Paths) {
@@ -132,7 +132,7 @@ pub fn confirm_uninstall(name: &str, isolated: bool) -> Result<UninstallChoice> 
         .output()
         .map_err(|e| match e.kind() {
             ErrorKind::NotFound => {
-                anyhow::anyhow!("zenity is not installed, so hermit can't ask for confirmation")
+                anyhow::anyhow!("zenity is not installed, so winkle can't ask for confirmation")
             }
             _ => anyhow::Error::new(e).context("running zenity"),
         })?;
@@ -150,7 +150,7 @@ pub fn confirm_uninstall(name: &str, isolated: bool) -> Result<UninstallChoice> 
 pub fn notify(summary: &str, body: &str) {
     let _ = Command::new("notify-send")
         .args([
-            "--app-name=hermit",
+            &format!("--app-name={APP_NAME}"),
             "--icon=user-trash-symbolic",
             summary,
             body,
@@ -184,10 +184,10 @@ mod tests {
     #[test]
     fn parses_gsettings_arrays() {
         assert_eq!(
-            parse_string_array("['org.gnome.Nautilus.desktop', 'hermit-github-com.desktop']\n"),
+            parse_string_array("['org.gnome.Nautilus.desktop', 'winkle-github-com.desktop']\n"),
             Some(vec![
                 "org.gnome.Nautilus.desktop".into(),
-                "hermit-github-com.desktop".into()
+                "winkle-github-com.desktop".into()
             ])
         );
         assert_eq!(parse_string_array("@as []"), Some(vec![]));

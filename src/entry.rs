@@ -1,5 +1,5 @@
-//! hermit's desktop entries: the model, writer and reader. The entry is the
-//! registry (design decision 1); hermit only reads entries it wrote.
+//! winkle's desktop entries: the model, writer and reader. The entry is the
+//! registry (design decision 1); winkle only reads entries it wrote.
 
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -14,6 +14,13 @@ use crate::paths::Paths;
 pub const FORMAT_VERSION: u32 = 1;
 
 const MAIN_GROUP: &str = "Desktop Entry";
+
+/// Prefix of winkle's own keys in desktop entries (`X-Winkle-Id`, ...).
+pub const KEY_PREFIX: &str = "X-Winkle-";
+
+fn key(name: &str) -> String {
+    format!("{KEY_PREFIX}{name}")
+}
 const UNINSTALL_ACTION: &str = "uninstall";
 
 /// Everything needed to write an app's desktop entry.
@@ -37,7 +44,7 @@ pub struct ShortcutAction {
     pub exec: Vec<String>,
 }
 
-/// What hermit reads back from an installed entry.
+/// What winkle reads back from an installed entry.
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]
 pub struct InstalledApp {
     pub id: String,
@@ -77,16 +84,16 @@ impl AppEntry {
         out.kv("Categories", "Network;");
         out.kv("Keywords", &escape_list(&self.keywords));
         out.kv("Actions", &escape_list(&actions));
-        out.kv("X-Hermit-Id", &self.id);
-        out.kv("X-Hermit-Url", &escape_string(self.url.as_str()));
-        out.kv("X-Hermit-Profile", &self.profile.to_string());
-        out.kv("X-Hermit-Version", &FORMAT_VERSION.to_string());
+        out.kv(&key("Id"), &self.id);
+        out.kv(&key("Url"), &escape_string(self.url.as_str()));
+        out.kv(&key("Profile"), &self.profile.to_string());
+        out.kv(&key("Version"), &FORMAT_VERSION.to_string());
 
         for (i, shortcut) in self.shortcuts.iter().enumerate() {
             out.group(&format!("Desktop Action shortcut-{}", i + 1));
             out.kv("Name", &escape_string(&shortcut.name));
             out.kv("Exec", &escape_string(&exec_line(&shortcut.exec)));
-            out.kv("X-Hermit-Url", &escape_string(shortcut.url.as_str()));
+            out.kv(&key("Url"), &escape_string(shortcut.url.as_str()));
         }
 
         out.group(&format!("Desktop Action {UNINSTALL_ACTION}"));
@@ -113,7 +120,7 @@ impl Writer {
     }
 }
 
-/// Read the hermit entry at `path`. `Ok(None)` if the file isn't a hermit entry.
+/// Read the winkle entry at `path`. `Ok(None)` if the file isn't a winkle entry.
 pub fn read_entry(path: &Path) -> Result<Option<InstalledApp>> {
     let text =
         std::fs::read_to_string(path).with_context(|| format!("reading {}", path.display()))?;
@@ -121,7 +128,7 @@ pub fn read_entry(path: &Path) -> Result<Option<InstalledApp>> {
     let Some(main) = groups.get(MAIN_GROUP) else {
         return Ok(None);
     };
-    let Some(id) = main.get("X-Hermit-Id") else {
+    let Some(id) = main.get(&key("Id")) else {
         return Ok(None);
     };
     let id = unescape(id);
@@ -132,13 +139,13 @@ pub fn read_entry(path: &Path) -> Result<Option<InstalledApp>> {
         .map(|n| unescape(n))
         .ok_or_else(|| corrupt("Name"))?;
     let url = main
-        .get("X-Hermit-Url")
+        .get(&key("Url"))
         .and_then(|u| Url::parse(&unescape(u)).ok())
-        .ok_or_else(|| corrupt("X-Hermit-Url"))?;
+        .ok_or_else(|| corrupt(&key("Url")))?;
     let profile = main
-        .get("X-Hermit-Profile")
+        .get(&key("Profile"))
         .and_then(|p| p.parse::<ProfileMode>().ok())
-        .ok_or_else(|| corrupt("X-Hermit-Profile"))?;
+        .ok_or_else(|| corrupt(&key("Profile")))?;
 
     let actions = main
         .get("Actions")
@@ -151,7 +158,7 @@ pub fn read_entry(path: &Path) -> Result<Option<InstalledApp>> {
         .filter_map(|g| {
             Some(InstalledShortcut {
                 name: unescape(g.get("Name")?),
-                url: Url::parse(&unescape(g.get("X-Hermit-Url")?)).ok()?,
+                url: Url::parse(&unescape(g.get(&key("Url"))?)).ok()?,
             })
         })
         .collect();
@@ -167,7 +174,7 @@ pub fn read_entry(path: &Path) -> Result<Option<InstalledApp>> {
 }
 
 /// Groups of raw (still escaped) key/value pairs. Comments and localised keys
-/// are kept as-is; hermit only looks up exact keys.
+/// are kept as-is; winkle only looks up exact keys.
 fn parse_groups(text: &str) -> HashMap<String, HashMap<String, String>> {
     let mut groups: HashMap<String, HashMap<String, String>> = HashMap::new();
     let mut current: Option<String> = None;
@@ -320,7 +327,7 @@ mod tests {
                 ],
             }],
             uninstall_exec: vec![
-                "/home/u/My Tools/hermit".into(),
+                "/home/u/My Tools/winkle".into(),
                 "remove".into(),
                 "github-com".into(),
                 "--interactive".into(),
@@ -330,7 +337,7 @@ mod tests {
 
     fn validate(contents: &str) {
         let dir = tempfile::tempdir().unwrap();
-        let path = dir.path().join("hermit-test.desktop");
+        let path = dir.path().join("winkle-test.desktop");
         std::fs::write(&path, contents).unwrap();
         let out = Command::new("desktop-file-validate")
             .arg(&path)
@@ -360,7 +367,7 @@ mod tests {
             "no injected Exec line:\n{contents}"
         );
         let dir = tempfile::tempdir().unwrap();
-        let path = dir.path().join("hermit-github-com.desktop");
+        let path = dir.path().join("winkle-github-com.desktop");
         std::fs::write(&path, &contents).unwrap();
         assert_eq!(read_entry(&path).unwrap().unwrap().name, name);
     }
@@ -385,7 +392,7 @@ mod tests {
     fn round_trip() {
         let entry = sample("GitHub");
         let dir = tempfile::tempdir().unwrap();
-        let path = dir.path().join("hermit-github-com.desktop");
+        let path = dir.path().join("winkle-github-com.desktop");
         std::fs::write(&path, entry.to_desktop_file()).unwrap();
         let app = read_entry(&path).unwrap().unwrap();
         assert_eq!(
@@ -405,7 +412,7 @@ mod tests {
     }
 
     #[test]
-    fn non_hermit_entries_are_ignored() {
+    fn non_winkle_entries_are_ignored() {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("other.desktop");
         std::fs::write(
@@ -420,6 +427,13 @@ mod tests {
     fn lists_split_on_unescaped_semicolons() {
         assert_eq!(split_list(r"a;b\;c;d"), ["a", "b;c", "d"]);
         assert_eq!(split_list("a;b"), ["a", "b"]);
+    }
+
+    #[test]
+    fn key_prefix_derives_from_app_name() {
+        let name = crate::paths::APP_NAME;
+        let capitalised = name[..1].to_uppercase() + &name[1..];
+        assert_eq!(KEY_PREFIX, format!("X-{capitalised}-"));
     }
 
     #[test]

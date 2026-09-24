@@ -11,7 +11,7 @@ log=$(mktemp)
 profile=""
 args=(--no-first-run --no-default-browser-check "--app=$url" "$@")
 if [[ -z "${PROBE_SHARED:-}" ]]; then
-  base="$HOME/snap/chromium/common/hermit-spike"
+  base="$HOME/snap/chromium/common/winkle-spike"
   mkdir -p "$base"
   profile=$(mktemp -d "$base/profile.XXXXXX")
   args=("--user-data-dir=$profile" "${args[@]}")
@@ -27,7 +27,7 @@ done
 
 grep -o 'set_app_id("[^"]*")' "$log" | sed 's/set_app_id("\(.*\)")/\1/' | sort -u || echo "(no set_app_id seen)"
 
-# hermit's processes cannot signal snap-confined Chromium (EPERM, even outside
+# winkle's processes cannot signal snap-confined Chromium (EPERM, even outside
 # the Claude sandbox), so the window has to be closed by hand. Wait for that,
 # then delete the throwaway profile.
 if [[ -n "$profile" ]]; then

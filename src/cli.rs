@@ -2,7 +2,7 @@ use clap::{Args, Parser, Subcommand};
 
 /// Install websites as apps that feel native on GNOME.
 #[derive(Debug, Parser)]
-#[command(name = "hermit", version)]
+#[command(name = crate::paths::APP_NAME, version)]
 pub struct Cli {
     #[command(subcommand)]
     pub command: Command,
@@ -57,7 +57,7 @@ pub struct ListArgs {
 
 #[derive(Debug, Args)]
 pub struct RemoveArgs {
-    /// Id of the app to remove (see `hermit list`)
+    /// Id of the app to remove (see `winkle list`)
     pub id: String,
 
     /// Also delete the app's isolated profile (logins and site data)

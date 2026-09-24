@@ -115,8 +115,8 @@ pub fn derive_id(launch_url: &Url) -> Result<String> {
     Ok(id.to_string())
 }
 
-/// Returns whether an existing hermit app will be replaced. Never touches
-/// files hermit didn't create, even with `--force`.
+/// Returns whether an existing winkle app will be replaced. Never touches
+/// files winkle didn't create, even with `--force`.
 fn check_existing(path: &Path, id: &str, force: bool) -> Result<bool> {
     if !path.exists() {
         return Ok(false);
@@ -133,14 +133,14 @@ fn check_existing(path: &Path, id: &str, force: bool) -> Result<bool> {
             }
         }
         _ => bail!(
-            "{} exists but wasn't created by hermit; not touching it (choose another --id)",
+            "{} exists but wasn't created by winkle; not touching it (choose another --id)",
             path.display()
         ),
     }
 }
 
 fn build_entry(paths: &Paths, id: &str, meta: &AppMetadata, profile: &Profile) -> Result<AppEntry> {
-    let exe = std::env::current_exe().context("finding the hermit executable")?;
+    let exe = std::env::current_exe().context("finding the winkle executable")?;
     let host = meta.launch_url.host_str().unwrap_or_default().to_string();
     let mut keywords = vec![host.clone()];
     if let Some(bare) = host.strip_prefix("www.") {

@@ -2,7 +2,7 @@ use anyhow::{Context, Result};
 
 use crate::cli::ListArgs;
 use crate::entry::{InstalledApp, read_entry};
-use crate::paths::Paths;
+use crate::paths::{APP_NAME, Paths};
 
 pub fn run(args: ListArgs) -> Result<()> {
     let paths = Paths::from_env()?;
@@ -13,7 +13,7 @@ pub fn run(args: ListArgs) -> Result<()> {
         return Ok(());
     }
     if apps.is_empty() {
-        println!("No apps installed. Install one with `hermit install <url>`.");
+        println!("No apps installed. Install one with `winkle install <url>`.");
         return Ok(());
     }
 
@@ -55,7 +55,7 @@ pub fn run(args: ListArgs) -> Result<()> {
     Ok(())
 }
 
-/// Every hermit app on disk, sorted by id. Entries hermit can't read are
+/// Every winkle app on disk, sorted by id. Entries winkle can't read are
 /// skipped with a warning rather than hiding the rest.
 pub fn installed_apps(paths: &Paths) -> Result<Vec<InstalledApp>> {
     let dir = paths.applications_dir();
@@ -71,7 +71,7 @@ pub fn installed_apps(paths: &Paths) -> Result<Vec<InstalledApp>> {
         let Some(file_name) = path.file_name().and_then(|n| n.to_str()) else {
             continue;
         };
-        if !(file_name.starts_with("hermit-") && file_name.ends_with(".desktop")) {
+        if !(file_name.starts_with(&format!("{APP_NAME}-")) && file_name.ends_with(".desktop")) {
             continue;
         }
         match read_entry(&path) {
