@@ -62,37 +62,6 @@ Uninstall an app. You can also right-click it and choose **Uninstall**:
 winkle remove github-com
 ```
 
-## Switching from hermit
-
-winkle used to be called hermit. winkle doesn't see or manage apps installed under the old
-name, so switch them over in this order. The old apps' Uninstall actions run the `hermit`
-binary, so remove the apps before removing the binary.
-
-1. List your old apps, then remove each one with the old binary:
-
-   ```text
-   hermit list
-   hermit remove <id>
-   ```
-
-2. For an isolated app whose logins you want to keep, move its profile to winkle's folder:
-
-   ```text
-   mkdir -p ~/snap/chromium/common/winkle
-   mv ~/snap/chromium/common/hermit/<id> ~/snap/chromium/common/winkle/<id>
-   ```
-
-3. Reinstall each app with winkle, adding `--isolated` where it was isolated before.
-4. Remove the old binary:
-
-   ```text
-   cargo uninstall hermit
-   ```
-
-If you removed the binary first, the old apps still launch, but their Uninstall actions fail.
-Delete `~/.local/share/applications/hermit-*.desktop` and
-`~/.local/share/icons/hicolor/*/apps/hermit-*` to clear them.
-
 ## Profiles and your data
 
 - **Shared (default).** The app uses your main Chromium profile, so you're already logged in.
