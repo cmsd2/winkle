@@ -7,6 +7,10 @@ whole lifecycle: discovery, install, use, uninstall.
 
 - Rust for the real implementation. Spikes (throwaway experiments to answer a
   question) may use whatever is quickest (shell, Python); keep them under `spikes/`.
+- Before committing or pushing, all of these must pass with zero errors and zero warnings:
+  `cargo fmt --check`, `cargo clippy --all-targets -- -D warnings`, `cargo test`.
+- Tests must never touch the real desktop: integration tests run the binary with a temp
+  `HOME`/`XDG_DATA_HOME` and stub `gsettings`, `zenity`, `notify-send` and browser on `PATH`.
 
 ## Target environment
 

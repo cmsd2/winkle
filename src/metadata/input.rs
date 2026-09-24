@@ -28,10 +28,10 @@ pub fn parse_site_url(input: &str) -> Result<Url> {
     let candidate = if input.contains("://") {
         input.to_string()
     } else {
-        if let Some((scheme, _)) = input.split_once(':') {
-            if OPAQUE_SCHEMES.contains(&scheme.to_ascii_lowercase().as_str()) {
-                bail!("unsupported URL scheme `{scheme}`: only http and https sites can be installed");
-            }
+        if let Some((scheme, _)) = input.split_once(':')
+            && OPAQUE_SCHEMES.contains(&scheme.to_ascii_lowercase().as_str())
+        {
+            bail!("unsupported URL scheme `{scheme}`: only http and https sites can be installed");
         }
         format!("https://{input}")
     };
@@ -39,7 +39,9 @@ pub fn parse_site_url(input: &str) -> Result<Url> {
     let url = Url::parse(&candidate).map_err(|e| anyhow::anyhow!("invalid URL `{input}`: {e}"))?;
     match url.scheme() {
         "http" | "https" => {}
-        other => bail!("unsupported URL scheme `{other}`: only http and https sites can be installed"),
+        other => {
+            bail!("unsupported URL scheme `{other}`: only http and https sites can be installed")
+        }
     }
     if url.host_str().is_none_or(str::is_empty) {
         bail!("invalid URL `{input}`: no host");
@@ -53,7 +55,10 @@ mod tests {
 
     #[test]
     fn bare_host_becomes_https() {
-        assert_eq!(parse_site_url("hey.com").unwrap().as_str(), "https://hey.com/");
+        assert_eq!(
+            parse_site_url("hey.com").unwrap().as_str(),
+            "https://hey.com/"
+        );
     }
 
     #[test]

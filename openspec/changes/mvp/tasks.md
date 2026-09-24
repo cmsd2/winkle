@@ -44,21 +44,21 @@
 
 ## 6. Install command
 
-- [ ] 6.1 Id derivation from the launch URL's host (strip `www.`, dots → hyphens), `--id` validation to `[a-z0-9-]`, duplicate detection, `--force` replacement that keeps any isolated profile, and refusal to touch non-hermit files with the same name. Verify: integration tests (temp `XDG_DATA_HOME`, stub browser) for each `app-install` id and overwrite scenario.
-- [ ] 6.2 Wire up install: metadata → icons → entry → icon-cache nudge → `update-desktop-database` if present; print id and name. Verify: an integration test against an httpmock site produces the entry and icon files with expected contents.
-- [ ] 6.3 `--dry-run` prints the resolved metadata and planned files without writing. Verify: an integration test asserts the output and that the temp data dir stays empty.
-- [ ] 6.4 Uninstall action in the generated entry points at the absolute `current_exe()` path. Verify: an integration test checks the `[Desktop Action Uninstall]` `Exec` line.
+- [x] 6.1 Id derivation from the launch URL's host (strip `www.`, dots → hyphens), `--id` validation to `[a-z0-9-]`, duplicate detection, `--force` replacement that keeps any isolated profile, and refusal to touch non-hermit files with the same name. Verify: integration tests (temp `XDG_DATA_HOME`, stub browser) for each `app-install` id and overwrite scenario.
+- [x] 6.2 Wire up install: metadata → icons → entry → icon-cache nudge → `update-desktop-database` if present; print id and name. Verify: an integration test against an httpmock site produces the entry and icon files with expected contents.
+- [x] 6.3 `--dry-run` prints the resolved metadata and planned files without writing. Verify: an integration test asserts the output and that the temp data dir stays empty.
+- [x] 6.4 Uninstall action in the generated entry points at the absolute `current_exe()` path. Verify: an integration test checks the `[Desktop Action Uninstall]` `Exec` line.
 
 ## 7. List command
 
-- [ ] 7.1 `hermit list`, sorted by id, showing id, name, URL and profile, with the empty-state message. Verify: integration tests for two apps, no apps, and a non-hermit entry being ignored.
-- [ ] 7.2 `hermit list --json`, including shortcuts. Verify: an integration test parses the output with serde_json and checks the fields; with no apps it outputs `[]`.
+- [x] 7.1 `hermit list`, sorted by id, showing id, name, URL and profile, with the empty-state message. Verify: integration tests for two apps, no apps, and a non-hermit entry being ignored.
+- [x] 7.2 `hermit list --json`, including shortcuts. Verify: an integration test parses the output with serde_json and checks the fields; with no apps it outputs `[]`.
 
 ## 8. Remove command
 
-- [ ] 8.1 `hermit remove <id>`: delete the entry and icon files, remove from `favorite-apps` via gsettings (skip with a warning if unavailable), and error on an unknown or non-hermit id. Verify: integration tests using a stub `gsettings` on PATH that records calls.
-- [ ] 8.2 `--purge`: delete the isolated profile. On a shared app, print a "no app-specific data" note and don't touch the Chromium profile. Refuse if `SingletonLock` points at a live PID, before any change. Verify: integration tests for each scenario in the `app-removal` spec, faking the lock with a symlink to the test's own PID.
-- [ ] 8.3 `--interactive`: zenity question dialog (with the extra delete-data button for isolated apps), `notify-send` on success, `zenity --error` on failure; Cancel changes nothing. Verify: integration tests with stub `zenity` and `notify-send` scripts returning each exit code.
+- [x] 8.1 `hermit remove <id>`: delete the entry and icon files, remove from `favorite-apps` via gsettings (skip with a warning if unavailable), and error on an unknown or non-hermit id. Verify: integration tests using a stub `gsettings` on PATH that records calls.
+- [x] 8.2 `--purge`: delete the isolated profile. On a shared app, print a "no app-specific data" note and don't touch the Chromium profile. Refuse if `SingletonLock` points at a live PID, before any change. Verify: integration tests for each scenario in the `app-removal` spec, faking the lock with a symlink to the test's own PID.
+- [x] 8.3 `--interactive`: zenity question dialog (with the extra delete-data button for isolated apps), `notify-send` on success, `zenity --error` on failure; Cancel changes nothing. Verify: integration tests with stub `zenity` and `notify-send` scripts returning each exit code.
 
 ## 9. Docs and end-to-end checks
 

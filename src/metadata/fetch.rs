@@ -119,9 +119,15 @@ mod tests {
                 .body("hello");
         });
 
-        let resp = Fetcher::new().unwrap().get(&url(&server, "/a"), MAX_HTML).unwrap();
+        let resp = Fetcher::new()
+            .unwrap()
+            .get(&url(&server, "/a"), MAX_HTML)
+            .unwrap();
         assert_eq!(resp.final_url, url(&server, "/c"));
-        assert_eq!(resp.content_type.as_deref(), Some("text/html; charset=utf-8"));
+        assert_eq!(
+            resp.content_type.as_deref(),
+            Some("text/html; charset=utf-8")
+        );
         assert_eq!(resp.body, b"hello");
     }
 
@@ -132,7 +138,9 @@ mod tests {
             when.method(GET).path("/loop");
             then.status(302).header("location", "/loop");
         });
-        let err = Fetcher::new().unwrap().get(&url(&server, "/loop"), MAX_HTML);
+        let err = Fetcher::new()
+            .unwrap()
+            .get(&url(&server, "/loop"), MAX_HTML);
         assert!(matches!(err, Err(FetchError::Http(_))), "{err:?}");
     }
 
@@ -141,7 +149,9 @@ mod tests {
         let server = MockServer::start();
         server.mock(|when, then| {
             when.method(GET).path("/slow");
-            then.status(200).delay(Duration::from_millis(1500)).body("late");
+            then.status(200)
+                .delay(Duration::from_millis(1500))
+                .body("late");
         });
         let fetcher = Fetcher::with_timeout(Duration::from_millis(200)).unwrap();
         let err = fetcher.get(&url(&server, "/slow"), MAX_HTML).unwrap_err();
@@ -158,8 +168,14 @@ mod tests {
             when.method(GET).path("/big");
             then.status(200).body(vec![b'x'; 2048]);
         });
-        let err = Fetcher::new().unwrap().get(&url(&server, "/big"), 1024).unwrap_err();
-        assert!(matches!(err, FetchError::TooLarge { limit: 1024 }), "{err:?}");
+        let err = Fetcher::new()
+            .unwrap()
+            .get(&url(&server, "/big"), 1024)
+            .unwrap_err();
+        assert!(
+            matches!(err, FetchError::TooLarge { limit: 1024 }),
+            "{err:?}"
+        );
     }
 
     #[test]
@@ -169,7 +185,10 @@ mod tests {
             when.method(GET).path("/missing");
             then.status(404);
         });
-        let err = Fetcher::new().unwrap().get(&url(&server, "/missing"), MAX_HTML).unwrap_err();
+        let err = Fetcher::new()
+            .unwrap()
+            .get(&url(&server, "/missing"), MAX_HTML)
+            .unwrap_err();
         assert!(matches!(err, FetchError::Status(404)), "{err:?}");
     }
 

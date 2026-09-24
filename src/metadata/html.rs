@@ -30,7 +30,10 @@ pub fn parse_page(html: &str, base: &Url) -> PageInfo {
         let Ok(url) = base.join(href.trim()) else {
             continue;
         };
-        let rels: Vec<String> = rel.split_ascii_whitespace().map(str::to_ascii_lowercase).collect();
+        let rels: Vec<String> = rel
+            .split_ascii_whitespace()
+            .map(str::to_ascii_lowercase)
+            .collect();
         let has = |name: &str| rels.iter().any(|r| r == name);
 
         if has("manifest") {
@@ -88,15 +91,21 @@ mod tests {
     use super::*;
 
     fn fixture(name: &str) -> String {
-        std::fs::read_to_string(format!("{}/tests/fixtures/{name}", env!("CARGO_MANIFEST_DIR")))
-            .unwrap()
+        std::fs::read_to_string(format!(
+            "{}/tests/fixtures/{name}",
+            env!("CARGO_MANIFEST_DIR")
+        ))
+        .unwrap()
     }
 
     #[test]
     fn github_like_page() {
         let base = Url::parse("https://github.com/").unwrap();
         let info = parse_page(&fixture("github-like.html"), &base);
-        assert_eq!(info.manifest.unwrap().as_str(), "https://github.com/manifest.json");
+        assert_eq!(
+            info.manifest.unwrap().as_str(),
+            "https://github.com/manifest.json"
+        );
         assert_eq!(info.application_name.as_deref(), Some("GitHub"));
         assert_eq!(info.og_site_name.as_deref(), Some("GitHub"));
         assert_eq!(info.theme_color.as_deref(), Some("#1e2327"));
@@ -119,7 +128,11 @@ mod tests {
         let info = parse_page(&fixture("hey-like.html"), &base);
         assert!(info.manifest.is_none());
         assert_eq!(info.og_site_name.as_deref(), Some("HEY"));
-        let touch: Vec<_> = info.apple_touch_icons.iter().map(|i| i.url.as_str()).collect();
+        let touch: Vec<_> = info
+            .apple_touch_icons
+            .iter()
+            .map(|i| i.url.as_str())
+            .collect();
         assert_eq!(
             touch,
             [

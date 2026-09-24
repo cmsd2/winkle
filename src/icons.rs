@@ -26,7 +26,11 @@ pub struct IconFiles {
 
 /// Render the icon files: the chosen icon, or a placeholder built from the
 /// app name and theme colour.
-pub fn render(icon: Option<&IconImage>, name: &str, theme_color: Option<&str>) -> Result<IconFiles> {
+pub fn render(
+    icon: Option<&IconImage>,
+    name: &str,
+    theme_color: Option<&str>,
+) -> Result<IconFiles> {
     match icon {
         Some(IconImage::Raster(img)) => Ok(IconFiles {
             png: encode_png(&normalise_raster(img))?,
@@ -82,7 +86,12 @@ pub fn normalise_raster(img: &DynamicImage) -> RgbaImage {
     let (w, h) = rgba.dimensions();
     let side = w.max(h);
     let mut square = RgbaImage::new(side, side);
-    imageops::overlay(&mut square, &rgba, i64::from((side - w) / 2), i64::from((side - h) / 2));
+    imageops::overlay(
+        &mut square,
+        &rgba,
+        i64::from((side - w) / 2),
+        i64::from((side - h) / 2),
+    );
     if side == SIZE {
         square
     } else {
@@ -112,16 +121,25 @@ pub fn rasterise_svg(svg: &[u8]) -> Result<Vec<u8>> {
 
 /// A rounded square in the theme colour with the name's first letter.
 pub fn placeholder_svg(name: &str, theme_color: Option<&str>) -> String {
-    let (r, g, b) = theme_color.and_then(parse_hex_colour).unwrap_or(PLACEHOLDER_GREY);
+    let (r, g, b) = theme_color
+        .and_then(parse_hex_colour)
+        .unwrap_or(PLACEHOLDER_GREY);
     // Relative luminance decides between light and dark text.
     let luminance = 0.2126 * f64::from(r) + 0.7152 * f64::from(g) + 0.0722 * f64::from(b);
-    let fg = if luminance > 160.0 { "#1e1e1e" } else { "#ffffff" };
+    let fg = if luminance > 160.0 {
+        "#1e1e1e"
+    } else {
+        "#ffffff"
+    };
     let letter = name
         .chars()
         .find(|c| c.is_alphanumeric())
         .map(|c| c.to_uppercase().collect::<String>())
         .unwrap_or_else(|| "?".into());
-    let letter = letter.replace('&', "&amp;").replace('<', "&lt;").replace('>', "&gt;");
+    let letter = letter
+        .replace('&', "&amp;")
+        .replace('<', "&lt;")
+        .replace('>', "&gt;");
     format!(
         r##"<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256" viewBox="0 0 256 256">
   <rect x="16" y="16" width="224" height="224" rx="52" fill="#{r:02x}{g:02x}{b:02x}"/>
@@ -139,7 +157,11 @@ fn parse_hex_colour(s: &str) -> Option<(u8, u8, u8)> {
     }
     let channel = |i: usize, len: usize| u8::from_str_radix(&hex[i..i + len], 16).ok();
     match hex.len() {
-        3 => Some((channel(0, 1)? * 17, channel(1, 1)? * 17, channel(2, 1)? * 17)),
+        3 => Some((
+            channel(0, 1)? * 17,
+            channel(1, 1)? * 17,
+            channel(2, 1)? * 17,
+        )),
         6 | 8 => Some((channel(0, 2)?, channel(2, 2)?, channel(4, 2)?)),
         _ => None,
     }
@@ -147,7 +169,8 @@ fn parse_hex_colour(s: &str) -> Option<(u8, u8, u8)> {
 
 fn encode_png(img: &RgbaImage) -> Result<Vec<u8>> {
     let mut out = std::io::Cursor::new(Vec::new());
-    img.write_to(&mut out, ImageFormat::Png).context("encoding icon PNG")?;
+    img.write_to(&mut out, ImageFormat::Png)
+        .context("encoding icon PNG")?;
     Ok(out.into_inner())
 }
 
@@ -161,7 +184,7 @@ fn decode(png: &[u8]) -> RgbaImage {
 mod tests {
     use super::*;
     use crate::metadata::icon::tests::SVG;
-    use image::{Rgba, codecs::ico::IcoEncoder, ImageEncoder};
+    use image::{ImageEncoder, Rgba, codecs::ico::IcoEncoder};
 
     fn solid(w: u32, h: u32) -> DynamicImage {
         DynamicImage::ImageRgba8(RgbaImage::from_pixel(w, h, Rgba([200, 30, 30, 255])))
@@ -171,12 +194,22 @@ mod tests {
     fn tiny_ico_is_upscaled() {
         let mut ico = Vec::new();
         IcoEncoder::new(&mut ico)
-            .write_image(solid(16, 16).to_rgba8().as_raw(), 16, 16, image::ExtendedColorType::Rgba8)
+            .write_image(
+                solid(16, 16).to_rgba8().as_raw(),
+                16,
+                16,
+                image::ExtendedColorType::Rgba8,
+            )
             .unwrap();
-        let Some(IconImage::Raster(img)) = crate::metadata::icon::decode_icon(&ico, None, None) else {
+        let Some(IconImage::Raster(img)) = crate::metadata::icon::decode_icon(&ico, None, None)
+        else {
             panic!("ICO did not decode");
         };
-        let out = decode(&render(Some(&IconImage::Raster(img)), "x", None).unwrap().png);
+        let out = decode(
+            &render(Some(&IconImage::Raster(img)), "x", None)
+                .unwrap()
+                .png,
+        );
         assert_eq!(out.dimensions(), (256, 256));
         assert_eq!(out.get_pixel(128, 128)[3], 255);
     }
@@ -190,17 +223,33 @@ mod tests {
 
     #[test]
     fn non_square_jpeg_is_padded_not_stretched() {
-        let rgb = DynamicImage::ImageRgb8(image::RgbImage::from_pixel(300, 200, image::Rgb([10, 120, 200])));
+        let rgb = DynamicImage::ImageRgb8(image::RgbImage::from_pixel(
+            300,
+            200,
+            image::Rgb([10, 120, 200]),
+        ));
         let mut jpeg = std::io::Cursor::new(Vec::new());
         rgb.write_to(&mut jpeg, ImageFormat::Jpeg).unwrap();
         let img = image::load_from_memory(jpeg.get_ref()).unwrap();
         let out = normalise_raster(&img);
         assert_eq!(out.dimensions(), (256, 256));
         // 300×200 padded to 300×300: 50px bands top and bottom, ≈43px after scaling.
-        assert_eq!(out.get_pixel(128, 10)[3], 0, "top band should be transparent");
-        assert_eq!(out.get_pixel(128, 245)[3], 0, "bottom band should be transparent");
+        assert_eq!(
+            out.get_pixel(128, 10)[3],
+            0,
+            "top band should be transparent"
+        );
+        assert_eq!(
+            out.get_pixel(128, 245)[3],
+            0,
+            "bottom band should be transparent"
+        );
         assert_eq!(out.get_pixel(128, 128)[3], 255);
-        assert_eq!(out.get_pixel(5, 128)[3], 255, "full width, so no side bands");
+        assert_eq!(
+            out.get_pixel(5, 128)[3],
+            255,
+            "full width, so no side bands"
+        );
     }
 
     #[test]
@@ -246,7 +295,10 @@ mod tests {
     fn placeholder_escapes_and_contrasts() {
         let svg = placeholder_svg("<script>", Some("#ffffff"));
         assert!(svg.contains(">S</text>"), "{svg}");
-        assert!(svg.contains("fill=\"#1e1e1e\""), "dark text on light background");
+        assert!(
+            svg.contains("fill=\"#1e1e1e\""),
+            "dark text on light background"
+        );
         let svg = placeholder_svg("&co", None);
         assert!(svg.contains(">C</text>"));
         assert!(svg.contains("#5e5c64"));
@@ -258,15 +310,30 @@ mod tests {
     #[test]
     fn placeholder_snapshot() {
         let files = render(None, "GitHub", Some("#24292f")).unwrap();
-        let snapshot = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/snapshots/placeholder-G.png");
+        let snapshot =
+            PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("tests/snapshots/placeholder-G.png");
         if std::env::var_os("UPDATE_SNAPSHOTS").is_some() || !snapshot.exists() {
             write_atomic(&snapshot, &files.png).unwrap();
         }
         let png = decode(&files.png);
         assert_eq!(png.dimensions(), (256, 256));
-        assert_eq!(png.get_pixel(2, 2)[3], 0, "corner outside the rounded square is transparent");
-        assert_eq!(png.get_pixel(40, 128), &Rgba([0x24, 0x29, 0x2f, 255]), "background colour");
-        let white_pixels = png.pixels().filter(|p| p[0] > 240 && p[1] > 240 && p[2] > 240 && p[3] == 255).count();
-        assert!(white_pixels > 1500, "letter was not drawn ({white_pixels} white pixels)");
+        assert_eq!(
+            png.get_pixel(2, 2)[3],
+            0,
+            "corner outside the rounded square is transparent"
+        );
+        assert_eq!(
+            png.get_pixel(40, 128),
+            &Rgba([0x24, 0x29, 0x2f, 255]),
+            "background colour"
+        );
+        let white_pixels = png
+            .pixels()
+            .filter(|p| p[0] > 240 && p[1] > 240 && p[2] > 240 && p[3] == 255)
+            .count();
+        assert!(
+            white_pixels > 1500,
+            "letter was not drawn ({white_pixels} white pixels)"
+        );
     }
 }

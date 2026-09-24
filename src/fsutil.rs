@@ -11,7 +11,10 @@ use anyhow::{Context, Result};
 pub fn write_atomic(path: &Path, contents: &[u8]) -> Result<()> {
     let dir = path.parent().context("path has no parent directory")?;
     fs::create_dir_all(dir).with_context(|| format!("creating {}", dir.display()))?;
-    let file_name = path.file_name().context("path has no file name")?.to_string_lossy();
+    let file_name = path
+        .file_name()
+        .context("path has no file name")?
+        .to_string_lossy();
     let tmp = dir.join(format!(".{file_name}.tmp-{}", std::process::id()));
     let result = (|| {
         let mut f = fs::File::create(&tmp)?;

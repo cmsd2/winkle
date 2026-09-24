@@ -58,7 +58,9 @@ pub struct InstalledShortcut {
 impl AppEntry {
     pub fn to_desktop_file(&self) -> String {
         let host = self.url.host_str().unwrap_or_default();
-        let mut actions: Vec<String> = (1..=self.shortcuts.len()).map(|i| format!("shortcut-{i}")).collect();
+        let mut actions: Vec<String> = (1..=self.shortcuts.len())
+            .map(|i| format!("shortcut-{i}"))
+            .collect();
         actions.push(UNINSTALL_ACTION.into());
 
         let mut out = Writer::default();
@@ -113,14 +115,22 @@ impl Writer {
 
 /// Read the hermit entry at `path`. `Ok(None)` if the file isn't a hermit entry.
 pub fn read_entry(path: &Path) -> Result<Option<InstalledApp>> {
-    let text = std::fs::read_to_string(path).with_context(|| format!("reading {}", path.display()))?;
+    let text =
+        std::fs::read_to_string(path).with_context(|| format!("reading {}", path.display()))?;
     let groups = parse_groups(&text);
-    let Some(main) = groups.get(MAIN_GROUP) else { return Ok(None) };
-    let Some(id) = main.get("X-Hermit-Id") else { return Ok(None) };
+    let Some(main) = groups.get(MAIN_GROUP) else {
+        return Ok(None);
+    };
+    let Some(id) = main.get("X-Hermit-Id") else {
+        return Ok(None);
+    };
     let id = unescape(id);
 
     let corrupt = |what: &str| anyhow!("{}: invalid {what}", path.display());
-    let name = main.get("Name").map(|n| unescape(n)).ok_or_else(|| corrupt("Name"))?;
+    let name = main
+        .get("Name")
+        .map(|n| unescape(n))
+        .ok_or_else(|| corrupt("Name"))?;
     let url = main
         .get("X-Hermit-Url")
         .and_then(|u| Url::parse(&unescape(u)).ok())
@@ -130,7 +140,10 @@ pub fn read_entry(path: &Path) -> Result<Option<InstalledApp>> {
         .and_then(|p| p.parse::<ProfileMode>().ok())
         .ok_or_else(|| corrupt("X-Hermit-Profile"))?;
 
-    let actions = main.get("Actions").map(|a| split_list(a)).unwrap_or_default();
+    let actions = main
+        .get("Actions")
+        .map(|a| split_list(a))
+        .unwrap_or_default();
     let shortcuts = actions
         .iter()
         .filter(|a| a.as_str() != UNINSTALL_ACTION)
@@ -253,12 +266,16 @@ fn unescape(s: &str) -> String {
 /// every `%` so nothing is read as a field code. The result still needs
 /// `escape_string` (which doubles backslashes again, as the spec requires).
 pub fn exec_line(argv: &[String]) -> String {
-    argv.iter().map(|arg| quote_exec_arg(arg)).collect::<Vec<_>>().join(" ")
+    argv.iter()
+        .map(|arg| quote_exec_arg(arg))
+        .collect::<Vec<_>>()
+        .join(" ")
 }
 
 fn quote_exec_arg(arg: &str) -> String {
     const RESERVED: &[char] = &[
-        ' ', '\t', '\n', '"', '\'', '\\', '>', '<', '~', '|', '&', ';', '$', '*', '?', '#', '(', ')', '`',
+        ' ', '\t', '\n', '"', '\'', '\\', '>', '<', '~', '|', '&', ';', '$', '*', '?', '#', '(',
+        ')', '`',
     ];
     let arg = arg.replace('%', "%%");
     if !arg.is_empty() && !arg.contains(RESERVED) {
@@ -297,7 +314,10 @@ mod tests {
             shortcuts: vec![ShortcutAction {
                 name: "New \"issue\"; 100%".into(),
                 url: Url::parse("https://github.com/issues/new").unwrap(),
-                exec: vec!["/snap/bin/chromium".into(), "--app=https://github.com/issues/new".into()],
+                exec: vec![
+                    "/snap/bin/chromium".into(),
+                    "--app=https://github.com/issues/new".into(),
+                ],
             }],
             uninstall_exec: vec![
                 "/home/u/My Tools/hermit".into(),
@@ -312,9 +332,16 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("hermit-test.desktop");
         std::fs::write(&path, contents).unwrap();
-        let out = Command::new("desktop-file-validate").arg(&path).output().expect("desktop-file-validate");
-        let report = String::from_utf8_lossy(&out.stdout).to_string() + &String::from_utf8_lossy(&out.stderr);
-        assert!(out.status.success() && report.trim().is_empty(), "{report}\n---\n{contents}");
+        let out = Command::new("desktop-file-validate")
+            .arg(&path)
+            .output()
+            .expect("desktop-file-validate");
+        let report = String::from_utf8_lossy(&out.stdout).to_string()
+            + &String::from_utf8_lossy(&out.stderr);
+        assert!(
+            out.status.success() && report.trim().is_empty(),
+            "{report}\n---\n{contents}"
+        );
     }
 
     #[test]
@@ -327,7 +354,11 @@ mod tests {
         let name = "Evil\nExec=rm -rf ~; 100% \"quoted\" \\ back";
         let contents = sample(name).to_desktop_file();
         validate(&contents);
-        assert_eq!(contents.matches("\nExec=").count(), 3, "no injected Exec line:\n{contents}");
+        assert_eq!(
+            contents.matches("\nExec=").count(),
+            3,
+            "no injected Exec line:\n{contents}"
+        );
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("hermit-github-com.desktop");
         std::fs::write(&path, &contents).unwrap();
@@ -377,7 +408,11 @@ mod tests {
     fn non_hermit_entries_are_ignored() {
         let dir = tempfile::tempdir().unwrap();
         let path = dir.path().join("other.desktop");
-        std::fs::write(&path, "[Desktop Entry]\nType=Application\nName=Other\nExec=other\n").unwrap();
+        std::fs::write(
+            &path,
+            "[Desktop Entry]\nType=Application\nName=Other\nExec=other\n",
+        )
+        .unwrap();
         assert_eq!(read_entry(&path).unwrap(), None);
     }
 

@@ -50,7 +50,9 @@ pub fn resolve(entered: &Url, overrides: &Overrides, fetcher: &Fetcher) -> Resul
                      hint: pass --name (and optionally --icon) to install it anyway"
                 );
             };
-            warnings.push(format!("couldn't fetch {entered} ({err}); using --name and --icon only"));
+            warnings.push(format!(
+                "couldn't fetch {entered} ({err}); using --name and --icon only"
+            ));
             if icon_override.is_none() {
                 warnings.push("no icon; using a generated placeholder".into());
             }
@@ -104,16 +106,37 @@ pub fn resolve(entered: &Url, overrides: &Overrides, fetcher: &Fetcher) -> Resul
     let icon = match icon_override {
         Some(icon) => Some(icon),
         None => {
-            let favicon = page_url.join("/favicon.ico").ok().map(|u| IconCandidate::new(u, None, None));
+            let favicon = page_url
+                .join("/favicon.ico")
+                .ok()
+                .map(|u| IconCandidate::new(u, None, None));
             let groups = [
-                IconGroup { source: IconSource::ManifestAny, candidates: manifest.icons_any.clone() },
-                IconGroup { source: IconSource::ManifestMaskable, candidates: manifest.icons_maskable.clone() },
-                IconGroup { source: IconSource::AppleTouch, candidates: info.apple_touch_icons.clone() },
-                IconGroup { source: IconSource::LinkIcon, candidates: info.link_icons.clone() },
-                IconGroup { source: IconSource::Favicon, candidates: favicon.into_iter().collect() },
+                IconGroup {
+                    source: IconSource::ManifestAny,
+                    candidates: manifest.icons_any.clone(),
+                },
+                IconGroup {
+                    source: IconSource::ManifestMaskable,
+                    candidates: manifest.icons_maskable.clone(),
+                },
+                IconGroup {
+                    source: IconSource::AppleTouch,
+                    candidates: info.apple_touch_icons.clone(),
+                },
+                IconGroup {
+                    source: IconSource::LinkIcon,
+                    candidates: info.link_icons.clone(),
+                },
+                IconGroup {
+                    source: IconSource::Favicon,
+                    candidates: favicon.into_iter().collect(),
+                },
             ];
             let chosen = choose_icon(&groups, |url| {
-                fetcher.get(url, MAX_ICON).ok().map(|r| (r.body, r.content_type))
+                fetcher
+                    .get(url, MAX_ICON)
+                    .ok()
+                    .map(|r| (r.body, r.content_type))
             });
             if chosen.is_none() {
                 warnings.push("no usable icon found; using a generated placeholder".into());
@@ -148,14 +171,16 @@ fn host_name(url: &Url) -> String {
 }
 
 fn load_icon_override(spec: &str, fetcher: &Fetcher) -> Result<ChosenIcon> {
-    let (bytes, content_type, url) = if spec.starts_with("http://") || spec.starts_with("https://") {
+    let (bytes, content_type, url) = if spec.starts_with("http://") || spec.starts_with("https://")
+    {
         let url = Url::parse(spec).with_context(|| format!("invalid --icon URL `{spec}`"))?;
         let resp = fetcher
             .get(&url, MAX_ICON)
             .map_err(|e| anyhow!("couldn't fetch --icon {spec}: {e}"))?;
         (resp.body, resp.content_type, Some(url))
     } else {
-        let bytes = std::fs::read(Path::new(spec)).with_context(|| format!("couldn't read --icon {spec}"))?;
+        let bytes = std::fs::read(Path::new(spec))
+            .with_context(|| format!("couldn't read --icon {spec}"))?;
         (bytes, None, None)
     };
     let is_svg_path = url.is_none() && spec.to_ascii_lowercase().ends_with(".svg");
@@ -193,11 +218,19 @@ mod tests {
         let start = url("https://example.com/app?source=pwa");
         // Deep link wins.
         assert_eq!(
-            launch_url(&url("https://example.com/notifications"), Some(&start), &page).as_str(),
+            launch_url(
+                &url("https://example.com/notifications"),
+                Some(&start),
+                &page
+            )
+            .as_str(),
             "https://example.com/notifications"
         );
         // Root uses start_url.
-        assert_eq!(launch_url(&url("https://example.com/"), Some(&start), &page), start);
+        assert_eq!(
+            launch_url(&url("https://example.com/"), Some(&start), &page),
+            start
+        );
         // Root with a query is not the bare root.
         assert_eq!(
             launch_url(&url("https://example.com/?a=1"), Some(&start), &page).as_str(),
@@ -205,12 +238,22 @@ mod tests {
         );
         // Cross-origin start_url is ignored.
         assert_eq!(
-            launch_url(&url("https://example.com/"), Some(&url("https://evil.example/")), &page).as_str(),
+            launch_url(
+                &url("https://example.com/"),
+                Some(&url("https://evil.example/")),
+                &page
+            )
+            .as_str(),
             "https://example.com/"
         );
         // start_url on the redirected-to origin is accepted.
         assert_eq!(
-            launch_url(&url("https://hey.com/"), Some(&url("https://app.hey.com/imbox")), &url("https://app.hey.com/")).as_str(),
+            launch_url(
+                &url("https://hey.com/"),
+                Some(&url("https://app.hey.com/imbox")),
+                &url("https://app.hey.com/")
+            )
+            .as_str(),
             "https://app.hey.com/imbox"
         );
     }
@@ -220,7 +263,9 @@ mod tests {
         let server = MockServer::start();
         server.mock(|when, then| {
             when.method(GET).path("/");
-            then.status(200).header("content-type", "text/html").body(html_with_manifest());
+            then.status(200)
+                .header("content-type", "text/html")
+                .body(html_with_manifest());
         });
         let manifest = r##"{"name": "Example App", "start_url": "/app?source=pwa", "theme_color": "#224466",
             "icons": [{"src": "/i192.png", "sizes": "192x192"}, {"src": "/i512.png", "sizes": "512x512"}],
@@ -231,11 +276,15 @@ mod tests {
         });
         server.mock(|when, then| {
             when.method(GET).path("/i192.png");
-            then.status(200).header("content-type", "image/png").body(png(192, 192));
+            then.status(200)
+                .header("content-type", "image/png")
+                .body(png(192, 192));
         });
         server.mock(|when, then| {
             when.method(GET).path("/i512.png");
-            then.status(200).header("content-type", "image/png").body(png(512, 512));
+            then.status(200)
+                .header("content-type", "image/png")
+                .body(png(512, 512));
         });
 
         let meta = resolve(&url(&server.url("/")), &Overrides::default(), &fetcher()).unwrap();
@@ -290,7 +339,13 @@ mod tests {
         });
         let meta = resolve(&url(&server.url("/")), &Overrides::default(), &fetcher()).unwrap();
         assert_eq!(meta.name, "Basecamp");
-        assert!(meta.warnings.iter().any(|w| w.contains("ignoring manifest")), "{:?}", meta.warnings);
+        assert!(
+            meta.warnings
+                .iter()
+                .any(|w| w.contains("ignoring manifest")),
+            "{:?}",
+            meta.warnings
+        );
         // No icons anywhere, including /favicon.ico: placeholder.
         assert!(meta.icon.is_none());
         assert!(meta.warnings.iter().any(|w| w.contains("placeholder")));
@@ -309,7 +364,12 @@ mod tests {
 
     #[test]
     fn unreachable_without_name_fails_with_hint() {
-        let err = resolve(&url("http://127.0.0.1:1/"), &Overrides::default(), &fetcher()).unwrap_err();
+        let err = resolve(
+            &url("http://127.0.0.1:1/"),
+            &Overrides::default(),
+            &fetcher(),
+        )
+        .unwrap_err();
         assert!(err.to_string().contains("--name"), "{err}");
     }
 
@@ -335,11 +395,14 @@ mod tests {
         let server = MockServer::start();
         server.mock(|when, then| {
             when.method(GET).path("/");
-            then.status(200).body(r#"<html><head><title>Site</title></head></html>"#);
+            then.status(200)
+                .body(r#"<html><head><title>Site</title></head></html>"#);
         });
         server.mock(|when, then| {
             when.method(GET).path("/custom.svg");
-            then.status(200).header("content-type", "image/svg+xml").body(SVG);
+            then.status(200)
+                .header("content-type", "image/svg+xml")
+                .body(SVG);
         });
         let overrides = Overrides {
             name: Some("  My   Name ".into()),
@@ -355,7 +418,10 @@ mod tests {
         let dir = tempfile::tempdir().unwrap();
         let bad = dir.path().join("bad.png");
         std::fs::write(&bad, b"nope").unwrap();
-        let overrides = Overrides { name: Some("X".into()), icon: Some(bad.to_str().unwrap().into()) };
+        let overrides = Overrides {
+            name: Some("X".into()),
+            icon: Some(bad.to_str().unwrap().into()),
+        };
         assert!(resolve(&url("http://127.0.0.1:1/"), &overrides, &fetcher()).is_err());
     }
 }

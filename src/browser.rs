@@ -102,9 +102,18 @@ mod tests {
     fn app_id_matches_measurements() {
         for (launch, measured) in [
             ("https://github.com/", "chrome-github.com__-Default"),
-            ("https://github.com/notifications", "chrome-github.com__notifications-Default"),
-            ("https://github.com/pulls", "chrome-github.com__pulls-Default"),
-            ("https://github.com/issues/new?x=1", "chrome-github.com__issues_new-Default"),
+            (
+                "https://github.com/notifications",
+                "chrome-github.com__notifications-Default",
+            ),
+            (
+                "https://github.com/pulls",
+                "chrome-github.com__pulls-Default",
+            ),
+            (
+                "https://github.com/issues/new?x=1",
+                "chrome-github.com__issues_new-Default",
+            ),
         ] {
             assert_eq!(app_id(&url(launch)), measured, "{launch}");
         }
@@ -113,16 +122,30 @@ mod tests {
     #[test]
     fn shared_argv() {
         assert_eq!(
-            launch_argv(Path::new("/snap/bin/chromium"), &Profile::Shared, &url("https://github.com/")),
-            ["/snap/bin/chromium", "--profile-directory=Default", "--app=https://github.com/"]
+            launch_argv(
+                Path::new("/snap/bin/chromium"),
+                &Profile::Shared,
+                &url("https://github.com/")
+            ),
+            [
+                "/snap/bin/chromium",
+                "--profile-directory=Default",
+                "--app=https://github.com/"
+            ]
         );
     }
 
     #[test]
     fn isolated_argv() {
-        let profile = Profile::Isolated(PathBuf::from("/home/u/snap/chromium/common/hermit/app-hey-com"));
+        let profile = Profile::Isolated(PathBuf::from(
+            "/home/u/snap/chromium/common/hermit/app-hey-com",
+        ));
         assert_eq!(
-            launch_argv(Path::new("/snap/bin/chromium"), &profile, &url("https://app.hey.com/imbox")),
+            launch_argv(
+                Path::new("/snap/bin/chromium"),
+                &profile,
+                &url("https://app.hey.com/imbox")
+            ),
             [
                 "/snap/bin/chromium",
                 "--user-data-dir=/home/u/snap/chromium/common/hermit/app-hey-com",
@@ -135,8 +158,16 @@ mod tests {
     fn shortcut_argv_uses_the_app_profile() {
         let profile = Profile::Isolated(PathBuf::from("/p"));
         assert_eq!(
-            launch_argv(Path::new("/b"), &profile, &url("https://x.example/compose?to=a&b=c")),
-            ["/b", "--user-data-dir=/p", "--app=https://x.example/compose?to=a&b=c"]
+            launch_argv(
+                Path::new("/b"),
+                &profile,
+                &url("https://x.example/compose?to=a&b=c")
+            ),
+            [
+                "/b",
+                "--user-data-dir=/p",
+                "--app=https://x.example/compose?to=a&b=c"
+            ]
         );
     }
 

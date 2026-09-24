@@ -30,13 +30,14 @@ impl IconCandidate {
         Self {
             url,
             size_hint,
-            mime: mime.map(|m| m.trim().to_ascii_lowercase()).filter(|m| !m.is_empty()),
+            mime: mime
+                .map(|m| m.trim().to_ascii_lowercase())
+                .filter(|m| !m.is_empty()),
         }
     }
 
     pub fn is_svg_hint(&self) -> bool {
-        self.mime.as_deref().is_some_and(|m| m.contains("svg"))
-            || has_svg_extension(&self.url)
+        self.mime.as_deref().is_some_and(|m| m.contains("svg")) || has_svg_extension(&self.url)
     }
 }
 
@@ -98,7 +99,11 @@ pub struct ChosenIcon {
 }
 
 /// Decode icon bytes as SVG or a raster format; `None` if they are neither.
-pub fn decode_icon(bytes: &[u8], content_type: Option<&str>, url: Option<&Url>) -> Option<IconImage> {
+pub fn decode_icon(
+    bytes: &[u8],
+    content_type: Option<&str>,
+    url: Option<&Url>,
+) -> Option<IconImage> {
     let looks_svg = content_type.is_some_and(|ct| ct.contains("svg"))
         || url.is_some_and(has_svg_extension)
         || sniff_svg(bytes);
@@ -132,7 +137,9 @@ pub fn choose_icon(
 
         let mut rasters = Vec::new();
         for c in candidates.into_iter().take(MAX_FETCHES_PER_SOURCE) {
-            let Some((bytes, content_type)) = fetch(&c.url) else { continue };
+            let Some((bytes, content_type)) = fetch(&c.url) else {
+                continue;
+            };
             match decode_icon(&bytes, content_type.as_deref(), Some(&c.url)) {
                 Some(image @ IconImage::Svg(_)) => {
                     return Some(ChosenIcon {
@@ -187,22 +194,28 @@ pub(crate) mod tests {
         out.into_inner()
     }
 
-    pub const SVG: &str =
-        r##"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><rect width="10" height="10" fill="#123"/></svg>"##;
+    pub const SVG: &str = r##"<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10"><rect width="10" height="10" fill="#123"/></svg>"##;
 
     fn cand(url: &str, sizes: Option<&str>) -> IconCandidate {
         IconCandidate::new(Url::parse(url).unwrap(), sizes, None)
     }
 
-    fn server(files: &[(&str, Vec<u8>)]) -> impl FnMut(&Url) -> Option<(Vec<u8>, Option<String>)> + use<> {
-        let files: HashMap<String, Vec<u8>> =
-            files.iter().map(|(u, b)| (u.to_string(), b.clone())).collect();
+    fn server(
+        files: &[(&str, Vec<u8>)],
+    ) -> impl FnMut(&Url) -> Option<(Vec<u8>, Option<String>)> + use<> {
+        let files: HashMap<String, Vec<u8>> = files
+            .iter()
+            .map(|(u, b)| (u.to_string(), b.clone()))
+            .collect();
         move |url: &Url| files.get(url.as_str()).map(|b| (b.clone(), None))
     }
 
     #[test]
     fn size_hints() {
-        assert_eq!(cand("https://x/a.png", Some("16x16 32X32")).size_hint, Some(32));
+        assert_eq!(
+            cand("https://x/a.png", Some("16x16 32X32")).size_hint,
+            Some(32)
+        );
         assert_eq!(cand("https://x/a.png", Some("any")).size_hint, None);
         assert_eq!(cand("https://x/a.png", None).size_hint, None);
         assert!(cand("https://x/a.SVG", None).is_svg_hint());
@@ -218,7 +231,10 @@ pub(crate) mod tests {
                 cand("https://x/512.png", Some("192x192")),
             ],
         }];
-        let fetch = server(&[("https://x/192.png", png(192, 192)), ("https://x/512.png", png(512, 512))]);
+        let fetch = server(&[
+            ("https://x/192.png", png(192, 192)),
+            ("https://x/512.png", png(512, 512)),
+        ]);
         let chosen = choose_icon(&groups, fetch).unwrap();
         assert_eq!(chosen.origin, "https://x/512.png");
         assert_eq!(chosen.image.describe(), "512×512");
@@ -254,7 +270,10 @@ pub(crate) mod tests {
             },
             IconGroup {
                 source: IconSource::AppleTouch,
-                candidates: vec![cand("https://x/garbage.png", None), cand("https://x/touch.png", None)],
+                candidates: vec![
+                    cand("https://x/garbage.png", None),
+                    cand("https://x/touch.png", None),
+                ],
             },
         ];
         let fetch = server(&[
@@ -270,9 +289,15 @@ pub(crate) mod tests {
     fn svg_beats_bigger_raster_in_the_same_source() {
         let groups = [IconGroup {
             source: IconSource::LinkIcon,
-            candidates: vec![cand("https://x/big.png", Some("512x512")), cand("https://x/logo", None)],
+            candidates: vec![
+                cand("https://x/big.png", Some("512x512")),
+                cand("https://x/logo", None),
+            ],
         }];
-        let fetch = server(&[("https://x/big.png", png(512, 512)), ("https://x/logo", SVG.as_bytes().to_vec())]);
+        let fetch = server(&[
+            ("https://x/big.png", png(512, 512)),
+            ("https://x/logo", SVG.as_bytes().to_vec()),
+        ]);
         let chosen = choose_icon(&groups, fetch).unwrap();
         assert_eq!(chosen.origin, "https://x/logo");
         assert!(matches!(chosen.image, IconImage::Svg(_)));
@@ -282,17 +307,32 @@ pub(crate) mod tests {
     fn square_beats_larger_non_square() {
         let groups = [IconGroup {
             source: IconSource::LinkIcon,
-            candidates: vec![cand("https://x/wide.png", None), cand("https://x/square.png", None)],
+            candidates: vec![
+                cand("https://x/wide.png", None),
+                cand("https://x/square.png", None),
+            ],
         }];
-        let fetch = server(&[("https://x/wide.png", png(600, 200)), ("https://x/square.png", png(64, 64))]);
-        assert_eq!(choose_icon(&groups, fetch).unwrap().origin, "https://x/square.png");
+        let fetch = server(&[
+            ("https://x/wide.png", png(600, 200)),
+            ("https://x/square.png", png(64, 64)),
+        ]);
+        assert_eq!(
+            choose_icon(&groups, fetch).unwrap().origin,
+            "https://x/square.png"
+        );
     }
 
     #[test]
     fn no_usable_icon_anywhere() {
         let groups = [
-            IconGroup { source: IconSource::ManifestAny, candidates: vec![cand("https://x/a.png", None)] },
-            IconGroup { source: IconSource::Favicon, candidates: vec![cand("https://x/favicon.ico", None)] },
+            IconGroup {
+                source: IconSource::ManifestAny,
+                candidates: vec![cand("https://x/a.png", None)],
+            },
+            IconGroup {
+                source: IconSource::Favicon,
+                candidates: vec![cand("https://x/favicon.ico", None)],
+            },
         ];
         let fetch = server(&[("https://x/favicon.ico", b"<html>nope</html>".to_vec())]);
         assert!(choose_icon(&groups, fetch).is_none());
@@ -301,6 +341,9 @@ pub(crate) mod tests {
     #[test]
     fn broken_svg_is_rejected() {
         assert!(decode_icon(b"<svg><rect", Some("image/svg+xml"), None).is_none());
-        assert!(matches!(decode_icon(SVG.as_bytes(), None, None), Some(IconImage::Svg(_))));
+        assert!(matches!(
+            decode_icon(SVG.as_bytes(), None, None),
+            Some(IconImage::Svg(_))
+        ));
     }
 }

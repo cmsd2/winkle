@@ -52,8 +52,15 @@ pub fn parse_manifest(json: &[u8], manifest_url: &Url) -> Result<Manifest, Manif
         ..Default::default()
     };
 
-    for icon in obj.get("icons").and_then(Value::as_array).into_iter().flatten() {
-        let Some(src) = url(icon.get("src")) else { continue };
+    for icon in obj
+        .get("icons")
+        .and_then(Value::as_array)
+        .into_iter()
+        .flatten()
+    {
+        let Some(src) = url(icon.get("src")) else {
+            continue;
+        };
         let candidate = IconCandidate::new(
             src,
             icon.get("sizes").and_then(Value::as_str),
@@ -73,7 +80,12 @@ pub fn parse_manifest(json: &[u8], manifest_url: &Url) -> Result<Manifest, Manif
         // `monochrome`-only icons are silhouettes; not usable as app icons.
     }
 
-    for shortcut in obj.get("shortcuts").and_then(Value::as_array).into_iter().flatten() {
+    for shortcut in obj
+        .get("shortcuts")
+        .and_then(Value::as_array)
+        .into_iter()
+        .flatten()
+    {
         let name = shortcut
             .get("name")
             .or_else(|| shortcut.get("short_name"))
@@ -92,7 +104,11 @@ mod tests {
     use super::*;
 
     fn fixture(name: &str) -> Vec<u8> {
-        std::fs::read(format!("{}/tests/fixtures/{name}", env!("CARGO_MANIFEST_DIR"))).unwrap()
+        std::fs::read(format!(
+            "{}/tests/fixtures/{name}",
+            env!("CARGO_MANIFEST_DIR")
+        ))
+        .unwrap()
     }
 
     fn manifest_url() -> Url {
@@ -103,15 +119,28 @@ mod tests {
     fn github_like_manifest() {
         let m = parse_manifest(&fixture("manifest-github-like.json"), &manifest_url()).unwrap();
         assert_eq!(m.name.as_deref(), Some("GitHub"));
-        assert_eq!(m.start_url.unwrap().as_str(), "https://github.com/?source=pwa");
+        assert_eq!(
+            m.start_url.unwrap().as_str(),
+            "https://github.com/?source=pwa"
+        );
         assert_eq!(m.theme_color.as_deref(), Some("#1e2327"));
 
-        let any: Vec<_> = m.icons_any.iter().map(|i| (i.url.as_str(), i.size_hint)).collect();
+        let any: Vec<_> = m
+            .icons_any
+            .iter()
+            .map(|i| (i.url.as_str(), i.size_hint))
+            .collect();
         assert_eq!(
             any,
             [
-                ("https://github.githubassets.com/assets/app-icon-192.png", Some(192)),
-                ("https://github.githubassets.com/assets/app-icon-512.png", Some(512)),
+                (
+                    "https://github.githubassets.com/assets/app-icon-192.png",
+                    Some(192)
+                ),
+                (
+                    "https://github.githubassets.com/assets/app-icon-512.png",
+                    Some(512)
+                ),
             ]
         );
         let maskable: Vec<_> = m.icons_maskable.iter().map(|i| i.url.as_str()).collect();
