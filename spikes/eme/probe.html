@@ -1,0 +1,32 @@
+<!doctype html>
+<html><body><pre id="out">running</pre>
+<script>
+// Spike: what does Spotify's web player need that might be missing?
+(async () => {
+  const lines = [];
+  const say = (s) => { lines.push(s); document.getElementById('out').textContent = lines.join('\n'); };
+  say('isSecureContext: ' + window.isSecureContext);
+  for (const type of [
+    'audio/mp4; codecs="mp4a.40.2"',
+    'audio/mp4; codecs="flac"',
+    'audio/webm; codecs="opus"',
+    'audio/ogg; codecs="vorbis"',
+    'video/mp4; codecs="avc1.42E01E"',
+  ]) {
+    say(`MSE ${type}: ${window.MediaSource ? MediaSource.isTypeSupported(type) : 'no MediaSource'}`);
+  }
+  const config = [{
+    initDataTypes: ['cenc'],
+    audioCapabilities: [{ contentType: 'audio/mp4; codecs="mp4a.40.2"' }],
+  }];
+  try {
+    const access = await navigator.requestMediaKeySystemAccess('com.widevine.alpha', config);
+    say('Widevine access: OK');
+    await access.createMediaKeys();
+    say('Widevine createMediaKeys: OK');
+  } catch (e) {
+    say(`Widevine: FAIL ${e.name}: ${e.message}`);
+  }
+  say('done');
+})();
+</script></body></html>

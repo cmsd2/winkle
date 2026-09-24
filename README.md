@@ -98,6 +98,11 @@ Everything is in your home directory:
   opens at the address you gave.
 - **Links don't open in installed apps.** A `github.com` link clicked elsewhere opens in
   the browser, not in the GitHub app. That's on the roadmap.
+- **DRM sites (Spotify, Netflix) need Chromium restarted once after it's first installed.**
+  Chromium downloads its Widevine DRM module shortly after its first start, but on Linux it
+  only loads the module at startup. Until the next restart, Play does nothing on those
+  sites, in a tab or in a hermit app. Restart Chromium once (`chrome://restart`) and they work.
+  See `spikes/eme/FINDINGS.md`.
 - **hermit can't close apps.** Snap confinement stops other programs from signalling
   Chromium, so close an isolated app yourself before purging its data.
 - **Chromium snap on GNOME only** for now. See `docs/roadmap.md` for what's next.

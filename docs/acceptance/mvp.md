@@ -23,3 +23,10 @@ hermit install app.hey.com --isolated
 | 9 | GitHub right-click → Uninstall → Uninstall: app gone from grid, search and dock; notification shown | | |
 | 10 | HEY right-click → Uninstall shows "Uninstall and Delete Data"; choosing it with HEY open shows an error and removes nothing | | |
 | 11 | Close HEY, repeat 10: app and `~/snap/chromium/common/hermit/app-hey-com` are gone | | |
+
+## Extra: Spotify (shared)
+
+Installed by the user (`hermit install open.spotify.com`). It installed cleanly, but
+Play did nothing at first. The cause was Chromium itself: Widevine was downloaded after
+the browser session started, so it wasn't registered (see `spikes/eme/FINDINGS.md`).
+After `chrome://restart`, Spotify played in both a normal tab and the hermit app.
