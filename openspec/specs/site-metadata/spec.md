@@ -10,11 +10,11 @@ Works out how a website should be presented as an app (name, icon, launch URL an
 The system SHALL accept `http` and `https` URLs only. A URL given without a scheme SHALL be treated as `https`. Any other scheme SHALL be rejected with an error and a non-zero exit status.
 
 #### Scenario: Bare host is accepted
-- **WHEN** the user runs `hermit install hey.com`
+- **WHEN** the user runs `winkle install hey.com`
 - **THEN** the system treats the URL as `https://hey.com/`
 
 #### Scenario: Non-web scheme is rejected
-- **WHEN** the user runs `hermit install file:///etc/passwd`
+- **WHEN** the user runs `winkle install file:///etc/passwd`
 - **THEN** the system exits with a non-zero status and an error naming the unsupported scheme, and installs nothing
 
 ### Requirement: Follow redirects to the real site
@@ -69,7 +69,7 @@ Within a source it SHALL prefer SVG, then the largest square raster image. If no
 - **THEN** a placeholder icon is generated and the install succeeds with a warning
 
 ### Requirement: Determine the launch URL
-The launch URL SHALL be the URL the user entered, normalised, **not** the URL reached after redirects. hermit fetches without the user's logins, so redirects often lead to a sign-in page; the browser follows redirects itself at launch. The exception: when the entered URL is the site root (path `/` with no query), the manifest `start_url` SHALL be used if it is same-origin with the fetched page. A cross-origin `start_url` SHALL be ignored.
+The launch URL SHALL be the URL the user entered, normalised, **not** the URL reached after redirects. winkle fetches without the user's logins, so redirects often lead to a sign-in page; the browser follows redirects itself at launch. The exception: when the entered URL is the site root (path `/` with no query), the manifest `start_url` SHALL be used if it is same-origin with the fetched page. A cross-origin `start_url` SHALL be ignored.
 
 #### Scenario: User gives a deep link
 - **WHEN** the user installs `https://github.com/notifications`

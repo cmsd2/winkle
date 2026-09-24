@@ -7,14 +7,14 @@ Uninstalls a winkle app cleanly, from the command line or from the app's own rig
 ## Requirements
 
 ### Requirement: Remove command
-`hermit remove <id>` SHALL delete the app's desktop entry and icons, and remove the app from the dock favourites if pinned. The app SHALL disappear from the app grid and search without logging out.
+`winkle remove <id>` SHALL delete the app's desktop entry and icons, and remove the app from the dock favourites if pinned. The app SHALL disappear from the app grid and search without logging out.
 
 #### Scenario: Remove an installed app
-- **WHEN** the user runs `hermit remove github-com`
-- **THEN** the app no longer appears in the app grid, search, dock favourites or `hermit list`
+- **WHEN** the user runs `winkle remove github-com`
+- **THEN** the app no longer appears in the app grid, search, dock favourites or `winkle list`
 
 #### Scenario: Unknown id
-- **WHEN** the user runs `hermit remove does-not-exist`
+- **WHEN** the user runs `winkle remove does-not-exist`
 - **THEN** the command exits with a non-zero status and an error saying no such app is installed
 
 ### Requirement: Data retention
@@ -36,15 +36,19 @@ Removing an app SHALL keep its isolated profile unless `--purge` is given. With 
 If `--purge` is given while the app's isolated profile is in use by a running Chromium process, the command SHALL fail before changing anything and ask the user to close the app first.
 
 #### Scenario: Purge while running
-- **WHEN** the isolated app is open and the user runs `hermit remove app-hey-com --purge`
+- **WHEN** the isolated app is open and the user runs `winkle remove app-hey-com --purge`
 - **THEN** nothing is removed and the error asks the user to close the app
 
-### Requirement: Only hermit's own apps
-Removal SHALL only act on apps hermit installed, and SHALL only delete files hermit created.
+### Requirement: Only winkle's own apps
+Removal SHALL only act on apps winkle installed, and SHALL only delete files winkle created.
 
-#### Scenario: Non-hermit entry with a matching name
-- **WHEN** the id matches a desktop entry that hermit did not create
-- **THEN** the command reports no such hermit app and deletes nothing
+#### Scenario: Non-winkle entry with a matching name
+- **WHEN** the id matches a desktop entry that winkle did not create
+- **THEN** the command reports no such winkle app and deletes nothing
+
+#### Scenario: App installed under the old hermit name
+- **WHEN** the user runs `winkle remove github-com` and only `hermit-github-com.desktop` exists
+- **THEN** the command reports that no winkle app `github-com` is installed and deletes nothing
 
 ### Requirement: Uninstall from the app's menu
 Each installed app SHALL have an "Uninstall" action in its right-click menu. Choosing it SHALL show a confirmation dialog naming the app with these choices:
@@ -52,7 +56,7 @@ Each installed app SHALL have an "Uninstall" action in its right-click menu. Cho
 - Uninstall
 - Uninstall and Delete Data (isolated apps only)
 
-Confirming SHALL behave like `hermit remove` (with `--purge` for the delete-data choice) and SHALL show a desktop notification with the result. Cancelling SHALL change nothing.
+Confirming SHALL behave like `winkle remove` (with `--purge` for the delete-data choice) and SHALL show a desktop notification with the result. Cancelling SHALL change nothing.
 
 #### Scenario: Uninstall via right-click
 - **WHEN** the user right-clicks the app, chooses Uninstall, then confirms
