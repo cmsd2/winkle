@@ -1,0 +1,1 @@
+{ "name": 42, "short_name": "Odd", "icons": "nope", "shortcuts": [ "x", { "name": "Ok", "url": "/ok" } ], "start_url": 7 }

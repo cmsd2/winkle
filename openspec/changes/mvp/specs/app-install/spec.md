@@ -20,7 +20,7 @@ Turns a website into an installed desktop app that GNOME treats like any other: 
 - **THEN** the command exits with status 0 and prints the new app's id and name
 
 ### Requirement: App identifier
-Each app SHALL have an id of lowercase letters, digits and hyphens. By default it SHALL be derived from the final host with a leading `www.` removed and dots replaced by hyphens (`app.hey.com` → `app-hey-com`). `--id` SHALL override it, and invalid ids SHALL be rejected.
+Each app SHALL have an id of lowercase letters, digits and hyphens. By default it SHALL be derived from the launch URL's host (see `site-metadata`), with a leading `www.` removed and dots replaced by hyphens (`app.hey.com` → `app-hey-com`). `--id` SHALL override it, and invalid ids SHALL be rejected.
 
 #### Scenario: Default id
 - **WHEN** the user installs `https://www.github.com/`

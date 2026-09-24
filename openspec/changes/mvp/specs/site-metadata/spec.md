@@ -69,7 +69,7 @@ Within a source it SHALL prefer SVG, then the largest square raster image. If no
 - **THEN** a placeholder icon is generated and the install succeeds with a warning
 
 ### Requirement: Determine the launch URL
-The launch URL SHALL be the URL the user entered (after redirects), unless it is the site root (path `/` with no query), in which case the manifest `start_url` SHALL be used if it is same-origin. A cross-origin `start_url` SHALL be ignored.
+The launch URL SHALL be the URL the user entered, normalised, **not** the URL reached after redirects. hermit fetches without the user's logins, so redirects often lead to a sign-in page; the browser follows redirects itself at launch. The exception: when the entered URL is the site root (path `/` with no query), the manifest `start_url` SHALL be used if it is same-origin with the fetched page. A cross-origin `start_url` SHALL be ignored.
 
 #### Scenario: User gives a deep link
 - **WHEN** the user installs `https://github.com/notifications`
@@ -78,6 +78,10 @@ The launch URL SHALL be the URL the user entered (after redirects), unless it is
 #### Scenario: User gives the root, manifest has start_url
 - **WHEN** the user installs `https://example.com/` and the manifest has `"start_url": "/app?source=pwa"`
 - **THEN** the launch URL is `https://example.com/app?source=pwa`
+
+#### Scenario: Logged-out redirect is not baked in
+- **WHEN** the user installs `https://mail.example.com/inbox`, and without cookies it redirects to `https://accounts.example.com/login`
+- **THEN** the launch URL is `https://mail.example.com/inbox`
 
 ### Requirement: Collect manifest shortcuts
 The system SHALL collect up to 10 manifest `shortcuts` that have a name and a same-origin URL, in manifest order. Other shortcuts SHALL be ignored.

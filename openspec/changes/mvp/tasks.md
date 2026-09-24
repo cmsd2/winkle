@@ -16,19 +16,19 @@
 
 ## 2. Project scaffolding
 
-- [ ] 2.1 `cargo init --name hermit` at the repo root, with a `.gitignore` for `target/`. Add dependencies: clap (derive), reqwest (blocking, rustls-tls, no default features), scraper, serde, serde_json, url, image, resvg, tiny-skia, anyhow, thiserror. Add dev-dependencies: tempfile, httpmock, assert_cmd, predicates. Verify: `cargo build` succeeds on arm64.
-- [ ] 2.2 Create the module skeleton from design decision 10 (`cli`, `metadata`, `icons`, `entry`, `browser`, `desktop`, `paths`), with clap subcommands `install`, `list` and `remove` and all their flags stubbed. Verify: `cargo run -- --help` and `cargo run -- install --help` list every option in the specs.
-- [ ] 2.3 Implement `paths`: honour `XDG_DATA_HOME` (default `~/.local/share`), the snap profile root `~/snap/chromium/common/hermit/`, and a `HERMIT_BROWSER` override for tests. Verify: unit tests cover the default and override paths.
+- [x] 2.1 `cargo init --name hermit` at the repo root, with a `.gitignore` for `target/`. Add dependencies: clap (derive), reqwest (blocking, rustls-tls, no default features), scraper, serde, serde_json, url, image, resvg, tiny-skia, anyhow, thiserror. Add dev-dependencies: tempfile, httpmock, assert_cmd, predicates. Verify: `cargo build` succeeds on arm64.
+- [x] 2.2 Create the module skeleton from design decision 10 (`cli`, `metadata`, `icons`, `entry`, `browser`, `desktop`, `paths`), with clap subcommands `install`, `list` and `remove` and all their flags stubbed. Verify: `cargo run -- --help` and `cargo run -- install --help` list every option in the specs.
+- [x] 2.3 Implement `paths`: honour `XDG_DATA_HOME` (default `~/.local/share`), the snap profile root `~/snap/chromium/common/hermit/`, and a `HERMIT_BROWSER` override for tests. Verify: unit tests cover the default and override paths.
 
 ## 3. Site metadata
 
-- [ ] 3.1 URL intake: accept a bare host (default to https), reject non-http(s) schemes, normalise. Verify: unit tests for `hey.com`, `https://x/`, `file:///…` and `ftp://…`.
-- [ ] 3.2 Fetcher with the design's timeouts, redirect limit, body caps and Chromium desktop User-Agent, returning the final URL after redirects. Verify: httpmock tests for redirect chains, a timeout and an oversized body.
-- [ ] 3.3 HTML extraction: manifest link, `application-name`, `og:site_name`, `<title>`, and apple-touch-icon and icon links with `sizes`, all resolved against the final URL. Verify: fixture tests for GitHub-like, HEY-like and bare pages.
-- [ ] 3.4 Manifest parsing: lenient struct; name/short_name, icons (src, sizes, type, purpose), start_url, theme_color, shortcuts. Invalid JSON or a 404 gives a warning, not an error. Verify: fixture tests, including a broken manifest.
-- [ ] 3.5 Launch URL rule: a deep link wins; the root uses a same-origin `start_url`; a cross-origin `start_url` is ignored. Shortcut filter: named, same-origin, at most 10. Verify: unit tests for each scenario in the `site-metadata` spec.
-- [ ] 3.6 Icon ranking and fetching per the spec order, using decoded dimensions and preferring SVG, then the largest square. Verify: tests for the "several sizes", "maskable only as fallback" and "no usable icon" scenarios.
-- [ ] 3.7 Overrides: `--name` and `--icon` (local path or URL). If the fetch fails without `--name`, error with a hint. Verify: tests for the two "site unreachable" scenarios.
+- [x] 3.1 URL intake: accept a bare host (default to https), reject non-http(s) schemes, normalise. Verify: unit tests for `hey.com`, `https://x/`, `file:///…` and `ftp://…`.
+- [x] 3.2 Fetcher with the design's timeouts, redirect limit, body caps and Chromium desktop User-Agent, returning the final URL after redirects. Verify: httpmock tests for redirect chains, a timeout and an oversized body.
+- [x] 3.3 HTML extraction: manifest link, `application-name`, `og:site_name`, `<title>`, and apple-touch-icon and icon links with `sizes`, all resolved against the final URL. Verify: fixture tests for GitHub-like, HEY-like and bare pages.
+- [x] 3.4 Manifest parsing: lenient struct; name/short_name, icons (src, sizes, type, purpose), start_url, theme_color, shortcuts. Invalid JSON or a 404 gives a warning, not an error. Verify: fixture tests, including a broken manifest.
+- [x] 3.5 Launch URL rule: the entered URL, not the post-redirect one; a deep link wins; the root uses a `start_url` same-origin with the fetched page; a cross-origin `start_url` is ignored. Shortcut filter: named, same-origin, at most 10. Verify: unit tests for each scenario in the `site-metadata` spec.
+- [x] 3.6 Icon ranking and fetching per the spec order, using decoded dimensions and preferring SVG, then the largest square. Verify: tests for the "several sizes", "maskable only as fallback" and "no usable icon" scenarios.
+- [x] 3.7 Overrides: `--name` and `--icon` (local path or URL). If the fetch fails without `--name`, error with a hint. Verify: tests for the two "site unreachable" scenarios.
 
 ## 4. Icons
 
@@ -44,7 +44,7 @@
 
 ## 6. Install command
 
-- [ ] 6.1 Id derivation (strip `www.`, dots → hyphens), `--id` validation to `[a-z0-9-]`, duplicate detection, `--force` replacement that keeps any isolated profile, and refusal to touch non-hermit files with the same name. Verify: integration tests (temp `XDG_DATA_HOME`, stub browser) for each `app-install` id and overwrite scenario.
+- [ ] 6.1 Id derivation from the launch URL's host (strip `www.`, dots → hyphens), `--id` validation to `[a-z0-9-]`, duplicate detection, `--force` replacement that keeps any isolated profile, and refusal to touch non-hermit files with the same name. Verify: integration tests (temp `XDG_DATA_HOME`, stub browser) for each `app-install` id and overwrite scenario.
 - [ ] 6.2 Wire up install: metadata → icons → entry → icon-cache nudge → `update-desktop-database` if present; print id and name. Verify: an integration test against an httpmock site produces the entry and icon files with expected contents.
 - [ ] 6.3 `--dry-run` prints the resolved metadata and planned files without writing. Verify: an integration test asserts the output and that the temp data dir stays empty.
 - [ ] 6.4 Uninstall action in the generated entry points at the absolute `current_exe()` path. Verify: an integration test checks the `[Desktop Action Uninstall]` `Exec` line.

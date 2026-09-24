@@ -1,0 +1,22 @@
+[package]
+name = "hermit"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1.0.104"
+clap = { version = "4.6.7", features = ["derive"] }
+image = "0.25.10"
+reqwest = { version = "0.13.5", default-features = false, features = ["blocking", "rustls", "gzip", "charset"] }
+resvg = "0.48.1"
+scraper = "0.27.0"
+serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.151"
+thiserror = "2.0.21"
+url = "2.5.8"
+
+[dev-dependencies]
+assert_cmd = "2.2.2"
+httpmock = "0.8.3"
+predicates = "3.1.4"
+tempfile = "3.27.0"
