@@ -74,4 +74,4 @@
   - Uninstall from right-click, both the keep-data and delete-data paths
 
   Verify: every item ticked, with notes on anything surprising.
-- [ ] 9.3 `cargo clippy -- -D warnings` and `cargo test` pass. Verify: both commands exit 0.
+- [x] 9.3 `cargo clippy -- -D warnings` and `cargo test` pass. Verify: both commands exit 0.
